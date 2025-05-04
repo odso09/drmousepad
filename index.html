@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>PadLab - Personaliza tu Mousepad Gamer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-bg: #F9FAFB;
+      --color-primary: #1F2937;
+      --color-accent: #3B82F6;
+    }
+
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow: auto;
+      background: var(--color-bg);
+      color: var(--color-primary);
+      font-family: 'Montserrat', sans-serif;
+      padding-bottom: 60px;
+      /* espacio para el footer fijo */
+    }
+
+    #header {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      z-index: 1;
+      position: relative;
+    }
+
+    #logo {
+      max-height: 160px;
+      width: auto;
+      margin-right: 1rem;
+    }
+
+    #header h1 {
+      font-size: 1.5rem;
+      margin: 0;
+    }
+
+    #main-container {
+      display: flex;
+      height: calc(100vh - 120px);
+      /* espacio para header + footer */
+    }
+
+    #ui-container {
+      width: 600px;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.8);
+      overflow-y: auto;
+      z-index: 2;
+      position: relative;
+    }
+
+    #canvas-container {
+      flex: 1;
+      position: relative;
+      background: transparent;
+      z-index: 0;
+    }
+
+    button,
+    select,
+    input[type=file] {
+      background: #fff;
+      border: 1px solid #D1D5DB;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover,
+    select:hover,
+    input[type=file]:hover {
+      border-color: var(--color-accent);
+    }
+
+    #footer {
+      text-align: center;
+      padding: 1rem;
+      background: #fff;
+      box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.1);
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      z-index: 3;
+    }
+
+    @media (max-width: 767px) {
+      #main-container {
+        flex-direction: column;
+      }
+
+      #ui-container {
+        width: 100%;
+        height: auto;
+      }
+
+      #canvas-container {
+        height: 60vh;
+      }
+    }
+
+    @media (max-width: 768px) {
+
+      button,
+      select,
+      input[type=file] {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+      }
+    }
+
+
+    @media (max-width: 768px) {
+
+      /* Pasa el layout a columna */
+      #main-container {
+        flex-direction: column;
+      }
+
+      /* La UI ocupa todo el ancho arriba */
+      #ui-container {
+        width: 100%;
+        height: auto;
+      }
+
+      /* El canvas baja y ocupa 60% de la altura */
+      #canvas-container {
+        height: 60vh;
+      }
+    }
+  </style>
+
+  <!-- Import Map para módulos de three.js -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.152.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <header id="header">
+    <img src="logo.png" alt="PadLab" id="logo" />
+    <h1>PadLab</h1>
+  </header>
+
+  <div id="main-container">
+    <div id="ui-container">
+      <label for="size">Tamaño:</label>
+      <select id="size">
+        <option value="80x40">80×40 cm</option>
+      </select>
+      <br><br>
+      <label for="imageUpload">Imagen:</label>
+      <input type="file" id="imageUpload" accept="image/*">
+      <br><br>
+      <button id="payBtn">Pagar USD 25</button>
+    </div>
+    <div id="canvas-container"></div>
+  </div>
+
+  <footer id="footer">
+    © 2025 PadLab. Todos los derechos reservados.
+  </footer>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // Referencia al contenedor del canvas
+    const container = document.getElementById('canvas-container');
+
+    // Crear escena y cámara
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+
+    // Renderer ajustado al tamaño del contenedor
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    // Posicionar el canvas dentro del contenedor
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
+    container.appendChild(renderer.domElement);
+
+    // Geometría del mousepad (8×4 = 80×40 cm)
+    const geometry = new THREE.PlaneGeometry(8, 4);
+    const loader = new THREE.TextureLoader();
+    let mesh;
+    function setTexture(url) {
+      loader.load(url, texture => {
+        if (mesh) scene.remove(mesh);
+        mesh = new THREE.Mesh(
+          geometry,
+          new THREE.MeshBasicMaterial({ map: texture })
+        );
+        mesh.rotation.x = -0.1;
+        scene.add(mesh);
+      });
+    }
+
+    // Controles OrbitControls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    camera.position.set(0, 0, 10);
+    controls.update();
+
+    // Loop de animación
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Conectar al input de imagen
+    document.getElementById('imageUpload').addEventListener('change', e => {
+      setTexture(URL.createObjectURL(e.target.files[0]));
+    });
+
+    // Ajuste en resize del contenedor
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    // Simulación de botón de pago
+    document.getElementById('payBtn').addEventListener('click', () => {
+      alert('Funcionalidad de pago próximamente');
+    });
+  </script>
+</body>
+
+</html>
