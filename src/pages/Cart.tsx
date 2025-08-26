@@ -1,0 +1,60 @@
+import { useCart } from "@/context/CartContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+
+export default function CartPage() {
+  const { items, updateQuantity, removeItem, total, clear } = useCart();
+
+  const handlePay = (method: string) => {
+    toast.success(`Pago iniciado vía ${method}. Te enviaremos un email con instrucciones.`);
+    // Mantener el carrito para demo; en prod podríamos limpiar al confirmar
+  };
+
+  return (
+    <section className="container py-10">
+      <h1 className="text-3xl font-bold mb-6">Carrito</h1>
+      {items.length === 0 ? (
+        <p className="text-muted-foreground">Tu carrito está vacío.</p>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <div className="space-y-4">
+            {items.map((it) => (
+              <div key={it.id} className="flex gap-4 border border-border rounded-lg p-3 bg-card">
+                {it.data.thumbnail && (
+                  <img src={it.data.thumbnail} alt="Diseño del mousepad" className="w-40 h-28 object-cover rounded" loading="lazy" />
+                )}
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">Mousepad Personalizado</h3>
+                    <button className="text-sm underline text-muted-foreground" onClick={() => removeItem(it.id)}>Eliminar</button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{it.data.size} · RGB: {it.data.rgb ? 'Sí' : 'No'} · Logo: {it.data.logo.removed ? 'No' : `${it.data.logo.position}`}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <label className="text-sm">Cantidad</label>
+                    <Input type="number" className="w-20" value={it.quantity} min={1} onChange={(e) => updateQuantity(it.id, Math.max(1, parseInt(e.target.value || '1')))} />
+                  </div>
+                </div>
+                <div className="text-right font-semibold min-w-[120px]">{(it.data.total * it.quantity).toLocaleString()} Gs</div>
+              </div>
+            ))}
+          </div>
+          <aside className="h-fit rounded-lg border border-border p-5 bg-card">
+            <h3 className="text-lg font-semibold mb-3">Resumen</h3>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Total</span>
+              <span className="text-2xl font-bold">{total.toLocaleString()} Gs</span>
+            </div>
+            <div className="mt-4 grid gap-2">
+              <Button onClick={() => handlePay('Bancard')}>Pagar con Bancard</Button>
+              <Button variant="secondary" onClick={() => handlePay('Tigo Money')}>Pagar con Tigo Money</Button>
+              <Button variant="secondary" onClick={() => handlePay('Mercado Pago PY')}>Pagar con Mercado Pago</Button>
+              <Button variant="ghost" onClick={() => clear()}>Vaciar carrito</Button>
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">Recibirás un email de confirmación con instrucciones de contacto.</p>
+          </aside>
+        </div>
+      )}
+    </section>
+  );
+}

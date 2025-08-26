@@ -1,0 +1,38 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import Index2 from "./pages/index2";
+import NotFound from "./pages/NotFound";
+import PersonalizarPage from "./pages/Personalizar";
+import PersonalizarPage2 from "./pages/Personalizar2";
+import CartPage from "./pages/Cart";
+import Header from "./components/Header";
+import { CartProvider } from "./context/CartContext";
+
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <CartProvider>
+        <Header />
+        <Routes>
+          <Route path="/" element={<Index2 />} />
+           <Route path="/index2" element={<Index2 />} />
+          <Route path="/personalizar" element={<PersonalizarPage />} />
+            <Route path="/personalizar2" element={<PersonalizarPage2 />} />
+          <Route path="/carrito" element={<CartPage />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </CartProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;
