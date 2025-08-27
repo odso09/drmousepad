@@ -22,8 +22,8 @@ export const Hero = () => {
                 </h1>
 
                 <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl">
-                  Haz que tu escritorio cobre vida: diseña tu propio mousepad,
-                  enciende las luces RGB y dale estilo a tu espacio.   
+                  Haz que tu escritorio hable de ti: Diseña tu propio mousepad,
+                  enciende las luces RGB y transforma tu espacio.   
                 </p>
             </div>
 
