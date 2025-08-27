@@ -7,7 +7,7 @@ import logo from '../assets/logo.png';
 export const Header = () => {
   const { count } = useCart();
   return (
-<header className="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b border-border p-[15px]">
+<header className="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-background/10 border-b border-border p-[15px]">
 
       <div className="container flex items-center justify-between h-16">
   <Link to="/" className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md">
