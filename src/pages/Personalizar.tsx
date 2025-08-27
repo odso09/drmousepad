@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas as FabricCanvas, Image as FabricImage, Rect, Textbox } from "fabric";
+const logoUrl = new URL("../assets/logo.png", import.meta.url).href;
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -67,19 +68,54 @@ export default function PersonalizarPage() {
     fc.preserveObjectStacking = true;
     setFabricCanvas(fc);
 
-    // Add default logo (top layer)
-    const lg = new Textbox("Dr Mousepad", {
-      fontFamily: "Orbitron, sans-serif",
-      fill: "#a78bfa",
-      fontSize: 20,
-      selectable: true,
-      editable: false,
-      shadow: "0 0 10px rgba(167,139,250,0.6)",
-    } as any);
-    fc.add(lg);
-    setLogoObj(lg);
 
-    positionLogo(fc, lg, logoPos);
+    // Add official logo image (main, movable) con logs de depuración
+    // Cargar el logo usando un objeto Image para evitar problemas de CORS/timing
+    console.log('Intentando cargar logo en canvas:', logoUrl);
+    const imgEl = new window.Image();
+    imgEl.crossOrigin = 'anonymous';
+    imgEl.onload = () => {
+      const fabricImg = new FabricImage(imgEl, {
+        selectable: true,
+        shadow: "0 0 10px rgba(167,139,250,0.6)",
+      });
+      // Escalado automático para que el logo siempre sea visible
+      const maxWidth = 180;
+      const maxHeight = 80;
+      const scale = Math.min(maxWidth / fabricImg.width, maxHeight / fabricImg.height, 1);
+      fabricImg.set({
+        scaleX: scale,
+        scaleY: scale,
+      });
+      fc.add(fabricImg);
+      setLogoObj(fabricImg);
+      positionLogo(fc, fabricImg, logoPos);
+      console.log('Logo cargado en canvas:', fabricImg.width, fabricImg.height);
+    };
+    imgEl.onerror = (e) => {
+      console.error('No se pudo cargar el logo:', logoUrl, e);
+    };
+    imgEl.src = logoUrl;
+
+    // Add a second logo at the top-left (fixed, not selectable)
+    (FabricImage.fromURL as (url: string, callback: (img: any) => void) => void)(logoUrl, (img: any) => {
+      if (!img) return;
+      const maxWidth = 100;
+      const maxHeight = 40;
+      const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+      img.set({
+        scaleX: scale,
+        scaleY: scale,
+        left: 10,
+        top: 10,
+        selectable: false,
+        evented: false,
+        shadow: "0 0 6px rgba(167,139,250,0.4)",
+      });
+      fc.add(img);
+      fc.sendToBack(img);
+      fc.renderAll();
+    });
 
     return () => { void fc.dispose(); };
 
