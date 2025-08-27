@@ -8,21 +8,16 @@
   border-radius: 50%;
   font-weight: bold;
   font-size: 1.2rem;
-  background: #fff;
-  color: inherit;
-  box-shadow: 0 0 8px 0 rgba(0,0,0,0.12);
   margin-right: 0.5rem;
-  border: 3px solid currentColor;
-}
-.step-badge.bg-cyan-500,
-.step-badge.bg-fuchsia-500,
-.step-badge.bg-green-500,
-.step-badge.bg-orange-500,
-.step-badge.bg-pink-500 {
-  background: currentColor;
   color: #fff;
+  background: #06b6d4; /* cyan-500 por defecto */
+  box-shadow: 0 0 8px 0 rgba(0,0,0,0.12);
   border: none;
 }
+.step-badge.step-badge-fuchsia { background: #d946ef; }
+.step-badge.step-badge-green { background: #22c55e; }
+.step-badge.step-badge-orange { background: #fb923c; }
+.step-badge.step-badge-pink { background: #ec4899; }
 #root {
   max-width: 1280px;
   margin: 0 auto;

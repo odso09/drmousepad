@@ -295,7 +295,20 @@ export default function PersonalizarPage() {
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div className="rounded-xl bg-card border p-5">
             <div className="flex items-center gap-3 mb-3">
-              <span className="step-badge bg-cyan-500 text-white">1</span>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '2.2rem',
+                height: '2.2rem',
+                borderRadius: '50%',
+                fontWeight: 'bold',
+                fontSize: '1.2rem',
+                marginRight: '0.5rem',
+                color: '#fff',
+                background: '#06b6d4', // cyan
+                boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
+              }}>1</span>
               <span className="font-bold">Seleccionar Tamaño</span>
             </div>
             <Select value={size} onValueChange={setSize}>
@@ -311,7 +324,20 @@ export default function PersonalizarPage() {
           </div>
           <div className="rounded-xl bg-card border p-5">
             <div className="flex items-center gap-3 mb-3">
-              <span className="step-badge bg-fuchsia-500 text-white">2</span>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '2.2rem',
+                height: '2.2rem',
+                borderRadius: '50%',
+                fontWeight: 'bold',
+                fontSize: '1.2rem',
+                marginRight: '0.5rem',
+                color: '#fff',
+                background: '#d946ef', // fuchsia
+                boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
+              }}>2</span>
               <span className="font-bold">Subir Imagen</span>
             </div>
             <input
@@ -350,7 +376,20 @@ export default function PersonalizarPage() {
           {/* Paso 3: Texto */}
           <div className="rounded-xl bg-card border p-5">
             <div className="flex items-center gap-3 mb-3">
-              <span className="step-badge bg-green-500 text-white">3</span>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '2.2rem',
+                height: '2.2rem',
+                borderRadius: '50%',
+                fontWeight: 'bold',
+                fontSize: '1.2rem',
+                marginRight: '0.5rem',
+                color: '#fff',
+                background: '#22c55e', // green
+                boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
+              }}>3</span>
               <span className="font-bold">Agregar Texto</span>
               <span className="font-bold text-base ml-auto">Color</span>
             </div>
@@ -386,7 +425,20 @@ export default function PersonalizarPage() {
           {/* Paso 4: Logo */}
           <div className="rounded-xl bg-card border p-5">
             <div className="flex items-center gap-3 mb-3">
-              <span className="step-badge bg-orange-500 text-white">4</span>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '2.2rem',
+                height: '2.2rem',
+                borderRadius: '50%',
+                fontWeight: 'bold',
+                fontSize: '1.2rem',
+                marginRight: '0.5rem',
+                color: '#fff',
+                background: '#fb923c', // orange
+                boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
+              }}>4</span>
               <span className="font-bold">Logo Dr Mousepad</span>
             </div>
             <div className="mb-2 flex items-center gap-2">
@@ -410,7 +462,20 @@ export default function PersonalizarPage() {
           {/* Paso 5: RGB */}
           <div className="rounded-xl bg-card border p-5">
             <div className="flex items-center gap-3 mb-3">
-              <span className="step-badge bg-pink-500 text-white">5</span>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '2.2rem',
+                height: '2.2rem',
+                borderRadius: '50%',
+                fontWeight: 'bold',
+                fontSize: '1.2rem',
+                marginRight: '0.5rem',
+                color: '#fff',
+                background: '#ec4899', // pink
+                boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
+              }}>5</span>
               <span className="font-bold">Luces RGB</span>
             </div>
             <div className="flex items-center gap-2 mb-2">
