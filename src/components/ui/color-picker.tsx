@@ -1,12 +1,24 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { HexColorPicker } from "react-colorful";
 
 export function ColorPicker({ color, onChange }: { color: string; onChange: (color: string) => void }) {
   const [show, setShow] = useState(false);
-  // Tamaño grande para igualar la altura de la caja de texto (aprox 40px)
+  const ref = useRef<HTMLDivElement>(null);
   const size = 40;
+
+  useEffect(() => {
+    if (!show) return;
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setShow(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [show]);
+
   return (
-    <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+    <div ref={ref} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
       <button
         type="button"
         aria-label="Elegir color de texto"
