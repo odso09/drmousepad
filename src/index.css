@@ -148,12 +148,48 @@
   }
 
   .btn-hero {
-    @apply bg-primary text-primary-foreground px-10 py-4 rounded-xl font-bold text-lg;
-    @apply shadow-[0_0_30px_hsl(var(--primary)/0.6)] hover:shadow-[0_0_40px_hsl(var(--primary)/0.8)];
-  @apply transition-all duration-300 hover:scale-105;
-  /* Custom slower glow-only pulse for hero CTA (no size change) */
-  animation: btn-slow-glow 3s ease-in-out infinite;
-    background: var(--gradient-primary-purple);
+    @apply text-primary-foreground px-10 py-4 rounded-xl font-bold text-lg;
+    background: linear-gradient(100deg, #0ea5e9 0%, #6366f1 100%);
+    box-shadow: 0 0 32px 0 #0ea5e9cc, 0 0 64px 0 #6366f1cc;
+    transition: box-shadow 0.3s, background 0.3s, filter 0.3s;
+    animation: btn-pulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes btn-pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.08);
+    }
+  }
+  @keyframes btn-breathing {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.07);
+    }
+  }
+  }
+
+  .btn-hero:hover, .btn-hero:focus {
+    background: linear-gradient(100deg, #6366f1 0%, #0ea5e9 100%);
+    box-shadow: 0 0 48px 0 #6366f1cc, 0 0 96px 0 #0ea5e9cc;
+    filter: brightness(1.08) saturate(1.2);
+  }
+
+  @keyframes btn-starblue-glow-breathing {
+    0%, 100% {
+      box-shadow: 0 0 32px 0 #0ea5e9cc, 0 0 64px 0 #6366f1cc;
+      filter: brightness(1);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 64px 0 #6366f1cc, 0 0 96px 0 #0ea5e9cc;
+      filter: brightness(1.08);
+      transform: scale(1.07);
+    }
   }
 
   /* Purple variant for gamer cards */
@@ -310,13 +346,13 @@
     position: relative;
   }
 
+
   .hero-bg::before {
     content: '';
     position: absolute;
     inset: 0;
     background: radial-gradient(circle at 50% 50%, hsl(var(--primary) / 0.1) 0%, transparent 50%);
   }
-}
 
 @layer utilities {
   /* Gaming Keyframes */

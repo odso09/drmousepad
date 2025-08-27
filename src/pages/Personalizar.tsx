@@ -441,7 +441,9 @@ export default function PersonalizarPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" onClick={addText} className="btn-hero">Agregar Texto</Button>
+                <Button type="button" onClick={addText} className="btn-hero">
+                  Agregar Texto
+                </Button>
               </div>
             </div>
           </div>
