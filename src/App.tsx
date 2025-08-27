@@ -7,7 +7,7 @@ import Index from "./pages/Index";
 import Index2 from "./pages/index2";
 import NotFound from "./pages/NotFound";
 import PersonalizarPage from "./pages/Personalizar";
-import PersonalizarPage2 from "./pages/Personalizar2";
+
 import CartPage from "./pages/Cart";
 import Header from "./components/Header";
 import { CartProvider } from "./context/CartContext";
@@ -25,7 +25,7 @@ const App = () => (
           <Route path="/" element={<Index2 />} />
            <Route path="/index2" element={<Index2 />} />
           <Route path="/personalizar" element={<PersonalizarPage />} />
-            <Route path="/personalizar2" element={<PersonalizarPage2 />} />
+
           <Route path="/carrito" element={<CartPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

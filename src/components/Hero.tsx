@@ -18,7 +18,7 @@ export const Hero = () => {
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Button asChild size="lg" className="hover-scale shadow-[var(--shadow-neon)]">
-              <Link to="/personalizar2">Empieza a personalizar</Link>
+              <Link to="/personalizar">Empieza a personalizar</Link>
             </Button>
             <ul className="flex flex-wrap gap-6 text-sm text-muted-foreground">
               <li>🚚 Envíos a todo el país</li>
