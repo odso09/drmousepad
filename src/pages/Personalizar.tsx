@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Canvas as FabricCanvas, Image as FabricImage, Rect, Textbox, Object as FabricObject } from "fabric";
 const logoUrl = new URL("../assets/logo.png", import.meta.url).href;
 import { Button } from "@/components/ui/button";
@@ -58,6 +59,8 @@ const parseSize = (s: string) => {
 };
 
 export default function PersonalizarPage() {
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("id");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [size, setSize] = useState<string>(DEFAULT_SIZE);
@@ -70,7 +73,26 @@ export default function PersonalizarPage() {
   const [textColor, setTextColor] = useState("#ffffff");
   // const [textInput, setTextInput] = useState("");
 
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
+  // Cargar datos si editando
+  useEffect(() => {
+    if (!editId || !items.length) return;
+    const item = items.find(i => i.id === editId);
+    if (!item) return;
+    // Setear todos los estados principales
+    setSize(item.data.size);
+    setRgb(item.data.rgb);
+    setLogoRemoved(item.data.logo.removed);
+    setLogoPos(item.data.logo.position);
+    setTexts(item.data.texts);
+    // Restaurar el canvas si hay json guardado
+    if (item.data.canvasJson && fabricCanvas) {
+      fabricCanvas.loadFromJSON(item.data.canvasJson, () => {
+        fabricCanvas.renderAll();
+      });
+    }
+    // NOTA: Si tienes más campos, agrégalos aquí
+  }, [editId, items, fabricCanvas]);
 
   const ratio = useMemo(() => {
     const { w, h } = parseSize(size);
@@ -285,6 +307,7 @@ export default function PersonalizarPage() {
     if (!fabricCanvas) return;
     // Export compressed thumbnail
     const dataUrl = (fabricCanvas as any).toDataURL({ format: 'jpeg', quality: 0.7 });
+    const canvasJson = fabricCanvas.toJSON();
     addItem({
       quantity: 1,
       data: {
@@ -297,6 +320,7 @@ export default function PersonalizarPage() {
         extras: { logoRemoved, rgb },
         total,
         thumbnail: dataUrl,
+        canvasJson,
       },
     });
     toast.success("Agregado al carrito");

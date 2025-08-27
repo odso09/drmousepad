@@ -2,6 +2,7 @@ import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, total, clear } = useCart();
@@ -25,9 +26,12 @@ export default function CartPage() {
                   <img src={it.data.thumbnail} alt="Diseño del mousepad" className="w-40 h-28 object-cover rounded" loading="lazy" />
                 )}
                 <div className="flex-1">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <h3 className="font-semibold">Mousepad Personalizado</h3>
-                    <button className="text-sm underline text-muted-foreground" onClick={() => removeItem(it.id)}>Eliminar</button>
+                    <div className="flex gap-2">
+                      <Link to={`/personalizar?id=${it.id}`} className="text-sm underline text-cyan-400 hover:text-cyan-300">Editar</Link>
+                      <button className="text-sm underline text-muted-foreground" onClick={() => removeItem(it.id)}>Eliminar</button>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">{it.data.size} · RGB: {it.data.rgb ? 'Sí' : 'No'} · Logo: {it.data.logo.removed ? 'No' : `${it.data.logo.position}`}</p>
                   <div className="mt-2 flex items-center gap-2">
