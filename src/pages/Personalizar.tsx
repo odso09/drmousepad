@@ -393,17 +393,19 @@ export default function PersonalizarPage() {
               <Switch checked={logoRemoved} onCheckedChange={setLogoRemoved} id="qlogo" />
               <label htmlFor="qlogo" className="text-sm">Quitar logo (+30,000 Gs)</label>
             </div>
-            <Select value={logoPos} onValueChange={v => setLogoPos(v as typeof logoPos)} disabled={logoRemoved}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Posición del logo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="top-left">Superior Izquierda</SelectItem>
-                <SelectItem value="top-right">Superior Derecha</SelectItem>
-                <SelectItem value="bottom-left">Inferior Izquierda</SelectItem>
-                <SelectItem value="bottom-right">Inferior Derecha</SelectItem>
-              </SelectContent>
-            </Select>
+            {!logoRemoved && (
+              <Select value={logoPos} onValueChange={v => setLogoPos(v as typeof logoPos)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Posición del logo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="top-left">Superior Izquierda</SelectItem>
+                  <SelectItem value="top-right">Superior Derecha</SelectItem>
+                  <SelectItem value="bottom-left">Inferior Izquierda</SelectItem>
+                  <SelectItem value="bottom-right">Inferior Derecha</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
           {/* Paso 5: RGB */}
           <div className="rounded-xl bg-card border p-5">
