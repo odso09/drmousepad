@@ -305,6 +305,78 @@ export default function PersonalizarPage() {
   const { w, h } = parseSize(size);
 
 
+  // Overlay state for object positions
+  const [objectOverlays, setObjectOverlays] = useState<any[]>([]);
+  const [selectedObj, setSelectedObj] = useState<any>(null);
+
+  // Helper to get all objects except background and logo (if present)
+  const getDeletableObjects = () => {
+    if (!fabricCanvas) return [];
+    return fabricCanvas.getObjects().filter(obj => {
+      // Exclude background, cropZone, and logo
+      if ((obj as any).name === 'cropZone') return false;
+      if (logoObj && obj === logoObj) return false;
+      // Only allow images and textboxes
+      return obj.type === 'image' || obj.type === 'textbox';
+    });
+  };
+
+  // Update overlay positions on canvas/object changes
+  useEffect(() => {
+    if (!fabricCanvas) return;
+    const updateOverlays = () => {
+      const objs = getDeletableObjects();
+      const overlays = objs.map(obj => {
+        // Get bounding rect relative to canvas
+        const bound = obj.getBoundingRect();
+        return {
+          id: obj.toString(),
+          left: bound.left,
+          top: bound.top,
+          width: bound.width,
+          height: bound.height,
+          obj,
+        };
+      });
+      setObjectOverlays(overlays);
+    };
+    updateOverlays();
+    // Listen to object events
+    const events = ['object:moving', 'object:scaling', 'object:rotating', 'object:added', 'object:removed', 'object:modified'];
+    events.forEach(evt => fabricCanvas.on(evt as any, updateOverlays));
+    // Also update on renderAll
+    fabricCanvas.on('after:render' as any, updateOverlays);
+
+    // Listen for selection changes
+    const handleSelection = () => {
+      const active = fabricCanvas.getActiveObject();
+      setSelectedObj(active && (active.type === 'image' || active.type === 'textbox') ? active : null);
+    };
+    fabricCanvas.on('selection:created' as any, handleSelection);
+    fabricCanvas.on('selection:updated' as any, handleSelection);
+    fabricCanvas.on('selection:cleared' as any, () => setSelectedObj(null));
+
+    // Initial
+    updateOverlays();
+    handleSelection();
+    return () => {
+      events.forEach(evt => fabricCanvas.off(evt as any, updateOverlays));
+      fabricCanvas.off('after:render' as any, updateOverlays);
+      fabricCanvas.off('selection:created' as any, handleSelection);
+      fabricCanvas.off('selection:updated' as any, handleSelection);
+      fabricCanvas.off('selection:cleared' as any, () => setSelectedObj(null));
+    };
+  }, [fabricCanvas, logoObj]);
+
+  // Delete handler
+  const handleDeleteObject = (obj: any) => {
+    if (!fabricCanvas) return;
+    fabricCanvas.remove(obj);
+    fabricCanvas.discardActiveObject();
+    fabricCanvas.renderAll();
+    toast.success('Elemento eliminado');
+  };
+
   return (
     <section className="container py-8 grid gap-8 lg:grid-cols-[1fr_360px]">
       <div>
@@ -390,6 +462,48 @@ export default function PersonalizarPage() {
                 className="absolute"
                 style={{ width: "100%", height: "100%" }}
               />
+              {/* Overlay delete buttons for each object */}
+              {objectOverlays.map(overlay => {
+                if (!selectedObj || selectedObj !== overlay.obj) return null;
+                // Margin between object and button
+                const margin = 8;
+                // Place button at top-right, outside the bounding box
+                const btnLeft = overlay.left + overlay.width + margin;
+                const btnTop = overlay.top - 16;
+                return (
+                  <button
+                    key={overlay.id}
+                    type="button"
+                    onClick={() => handleDeleteObject(overlay.obj)}
+                    style={{
+                      position: 'absolute',
+                      left: btnLeft,
+                      top: btnTop,
+                      zIndex: 10,
+                      width: 32,
+                      height: 32,
+                      background: 'rgba(30,41,59,0.92)',
+                      border: '2px solid #e11d48',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 8px 0 rgba(0,0,0,0.18)',
+                      cursor: 'pointer',
+                      transition: 'background 0.18s',
+                    }}
+                    title="Eliminar"
+                  >
+                    {/* Trash bin SVG icon */}
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ pointerEvents: 'none' }}>
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+                      <line x1="10" y1="11" x2="10" y2="17" />
+                      <line x1="14" y1="11" x2="14" y2="17" />
+                    </svg>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
