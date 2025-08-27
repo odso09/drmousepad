@@ -424,7 +424,7 @@ export default function PersonalizarPage() {
           </div>
           {/* Paso 4: Logo */}
           <div className="rounded-xl bg-card border p-5">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-5">
               <span style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -461,7 +461,7 @@ export default function PersonalizarPage() {
           </div>
           {/* Paso 5: RGB */}
           <div className="rounded-xl bg-card border p-5">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-5">
               <span style={{
                 display: 'inline-flex',
                 alignItems: 'center',
