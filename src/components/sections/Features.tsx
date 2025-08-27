@@ -55,7 +55,7 @@ export const Features = () => {
                 </div>
 
                 <div className="flex items-start min-h-[3rem]">
-                  <h3 className="text-lg font-bold mb-0 text-neon-purple text-left leading-tight">
+                  <h3 className="text-lg font-bold mb-0 text-cyan-400 text-left leading-tight">
                     {feature.title}
                   </h3>
                 </div>
