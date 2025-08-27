@@ -412,7 +412,7 @@ export default function PersonalizarPage() {
             <span>Logo Dr Mousepad:</span>
             <span className="font-bold flex items-center gap-1">
               {logoRemoved
-                ? <><span className="text-red-500 text-lg">&#10006;</span> <span className="text-red-500">Removido</span></>
+                ? <><span className="text-lg" style={{color:'#ef4444 !important'}}>&#10006;</span> <span className="text-red-500">Removido</span></>
                 : <><span className="text-green-400 text-lg">&#10003;</span> Incluido</>}
             </span>
           </li>
@@ -421,7 +421,7 @@ export default function PersonalizarPage() {
             <span className="font-bold flex items-center gap-1">
               {rgb
                 ? <><span className="text-green-400 text-lg">&#10003;</span> Activado</>
-                : <span className="text-red-500 font-bold flex items-center gap-1"><span className="text-lg">&#10006;</span>Desactivado</span>}
+                : <span className="text-red-500 font-bold flex items-center gap-1"><span className="text-lg" style={{color:'#ef4444 !important'}}>&#10006;</span>Desactivado</span>}
             </span>
           </li>
         </ul>
