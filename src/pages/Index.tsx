@@ -1,19 +1,31 @@
-import SEO from "@/components/SEO";
-import Hero from "@/components/Hero";
-import Gallery from "@/components/Gallery";
-import Features from "@/components/Features";
-import Testimonials from "@/components/Testimonials";
-import Footer from "@/components/Footer";
+import { Hero } from "@/components/sections/Hero";
+
+import { Gallery } from "@/components/sections/Gallery";
+import { Features } from "@/components/sections/Features";
+import { Testimonials } from "@/components/sections/Testimonials";
+import { Footer } from "@/components/sections/Footer";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <SEO title="Mousepad Gamer Personalizable | Dr Mousepad" description="Crea tu propio mousepad gamer con imagen, texto, logo y borde RGB. Compra online con envío en Paraguay." canonical="/" />
-      <Hero />
+  
+      
+        <Hero />
+     
       <Gallery />
       <Features />
+      {/* Botón Empieza a Personalizar antes de los comentarios */}
+      <div className="flex justify-center py-12">
+        <Link to="/personalizar">
+          <Button className="btn-hero text-lg px-8 py-6">
+            Empieza a Personalizar
+          </Button>
+        </Link>
+      </div>
       <Testimonials />
-      <Footer />
+  <Footer />
     </div>
   );
 };

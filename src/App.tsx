@@ -3,8 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
+
 import Index from "./pages/Index";
-import Index2 from "./pages/index2";
 import NotFound from "./pages/NotFound";
 import PersonalizarPage from "./pages/Personalizar";
 
@@ -22,8 +22,8 @@ const App = () => (
       <CartProvider>
         <Header />
         <Routes>
-          <Route path="/" element={<Index2 />} />
-           <Route path="/index2" element={<Index2 />} />
+          <Route path="/" element={<Index />} />
+           <Route path="/index2" element={<Index />} />
           <Route path="/personalizar" element={<PersonalizarPage />} />
 
           <Route path="/carrito" element={<CartPage />} />

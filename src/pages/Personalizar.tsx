@@ -348,7 +348,7 @@ export default function PersonalizarPage() {
        
           <div className="grid gap-2 md:col-span-2">
             <label className="text-sm">Posición del logo</label>
-            <Select value={logoPos} onValueChange={setLogoPos} disabled={logoRemoved}>
+            <Select value={logoPos} onValueChange={v => setLogoPos(v as typeof logoPos)} disabled={logoRemoved}>
               <SelectTrigger className="w-1/4 min-w-[150px]">
                 <SelectValue placeholder="Selecciona posición" />
               </SelectTrigger>
