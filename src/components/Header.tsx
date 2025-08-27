@@ -21,9 +21,9 @@ export const Header = () => {
   <nav className="flex items-center gap-10">
           <NavLink to="/" className={({ isActive }) => isActive ? "text-primary text-base md:text-lg" : "text-foreground/80 hover:text-foreground text-base md:text-lg"}>Inicio</NavLink>
           <NavLink to="/personalizar" className={({ isActive }) => isActive ? "text-primary text-base md:text-lg" : "text-foreground/80 hover:text-foreground text-base md:text-lg"}>Personalizar</NavLink>
-          <Button asChild variant="secondary" className="relative !bg-[linear-gradient(135deg,#0a2236_0%,#1a2636_60%,#232b36_100%)] !border-none">
+          <Button asChild variant="secondary" className="relative h-12 w-12 flex items-center justify-center !bg-[linear-gradient(135deg,#0a2236_0%,#1a2636_60%,#232b36_100%)] !border-none">
             <Link to="/carrito" aria-label="Abrir carrito">
-              <CartSimpleIcon className="h-6 w-6" />
+              <CartSimpleIcon className="h-9 w-9" />
               {count > 0 && (
                 <span className="absolute -top-2 -right-2 text-xs bg-primary text-primary-foreground rounded-full h-5 min-w-5 px-1 grid place-items-center">
                   {count}

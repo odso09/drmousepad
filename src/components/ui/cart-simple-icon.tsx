@@ -2,8 +2,6 @@ import * as React from "react";
 
 export const CartSimpleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
-    width={28}
-    height={28}
     viewBox="0 0 28 28"
     fill="none"
     stroke="#00e0ff"
