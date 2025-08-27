@@ -270,7 +270,7 @@ export default function PersonalizarPage() {
       <div>
         {/* Título y subtítulo */}
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-primary mb-2">Personaliza Tu Mousepad</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-cyber mb-2">Personaliza Tu Mousepad</h1>
           <p className="text-muted-foreground text-lg">Diseña tu mousepad gamer perfecto con nuestro editor avanzado</p>
         </div>
 
@@ -402,7 +402,7 @@ export default function PersonalizarPage() {
       </div>
       {/* Aside derecho: Resumen */}
       <aside className="lg:sticky lg:top-24 h-fit rounded-xl border border-border bg-card p-5">
-        <h3 className="text-lg font-bold mb-4 text-primary">Resumen del Pedido</h3>
+  <h3 className="text-lg font-bold mb-4 text-cyber">Resumen del Pedido</h3>
         <ul className="space-y-2 text-sm mb-4">
           <li className="flex justify-between items-center">
             <span>Tamaño:</span>
@@ -433,7 +433,7 @@ export default function PersonalizarPage() {
         {rgb && (
           <div className="mb-2 flex justify-between text-sm"><span>Luces RGB:</span><span>+{EXTRA_RGB.toLocaleString()} Gs</span></div>
         )}
-        <div className="mb-4 flex justify-between text-lg font-bold text-primary"><span>Total:</span><span className="text-cyan-400">{total.toLocaleString()} Gs</span></div>
+  <div className="mb-4 flex justify-between text-lg font-bold text-cyber"><span>Total:</span><span className="text-cyan-400">{total.toLocaleString()} Gs</span></div>
         <Button className="w-full btn-hero mb-4 flex items-center justify-center gap-2" onClick={handleAddToCart}>
           <span className="material-icons" style={{ fontSize: '1.2em' }}></span>
           Agregar al Carrito
