@@ -332,7 +332,7 @@ export default function PersonalizarPage() {
                 background: '#06b6d4', // cyan
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>1</span>
-              <span className="font-bold">Seleccionar Tamaño</span>
+              <span className="font-bold">Seleccionar tamaño del mousepad</span>
             </div>
             <Select value={size} onValueChange={setSize}>
               <SelectTrigger className="w-full">
