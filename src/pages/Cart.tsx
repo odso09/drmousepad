@@ -33,7 +33,15 @@ export default function CartPage() {
                       <button className="text-sm underline text-muted-foreground" onClick={() => removeItem(it.id)}>Eliminar</button>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">{it.data.size} · RGB: {it.data.rgb ? 'Sí' : 'No'} · Logo: {it.data.logo.removed ? 'No' : `${it.data.logo.position}`}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {it.data.size} · RGB: {it.data.rgb ? 'Sí' : 'No'} · Logo: {it.data.logo.removed ? 'No' : (
+                      it.data.logo.position === 'top-left' ? 'Superior Izquierda' :
+                      it.data.logo.position === 'top-right' ? 'Superior Derecha' :
+                      it.data.logo.position === 'bottom-left' ? 'Inferior Izquierda' :
+                      it.data.logo.position === 'bottom-right' ? 'Inferior Derecha' :
+                      it.data.logo.position
+                    )}
+                  </p>
                   <div className="mt-2 flex items-center gap-2">
                     <label className="text-sm">Cantidad</label>
                     <Input type="number" className="w-20" value={it.quantity} min={1} onChange={(e) => updateQuantity(it.id, Math.max(1, parseInt(e.target.value || '1')))} />
