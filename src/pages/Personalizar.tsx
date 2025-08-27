@@ -528,13 +528,17 @@ export default function PersonalizarPage() {
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>3</span>
               <span className="font-bold">Agregar Texto</span>
-              <span className="font-bold text-base ml-auto">Color</span>
             </div>
             <div className="mb-2">
-              <div className="flex gap-2 items-center">
+              {/* Texto label */}
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-semibold text-white">Texto</span>
+                <span className="text-sm font-semibold text-white">Color</span>
+              </div>
+              <div className="flex gap-2 items-center mb-2">
                 <Input
                   placeholder="Ingresa tu texto..."
-                  className="mb-2 flex-1"
+                  className="flex-1"
                   value={textInput}
                   onChange={e => setTextInput(e.target.value)}
                 />
@@ -542,6 +546,8 @@ export default function PersonalizarPage() {
                   <ColorPicker color={textColor} onChange={setTextColor} />
                 </div>
               </div>
+              {/* Fuente label */}
+              <span className="text-sm font-semibold text-white block mb-1">Fuente</span>
               <div className="flex gap-2">
                 <Select value={activeFont} onValueChange={setActiveFont}>
                   <SelectTrigger className="w-full">
@@ -580,22 +586,25 @@ export default function PersonalizarPage() {
               }}>4</span>
               <span className="font-bold">Logo Dr Mousepad</span>
             </div>
-            <div className="mb-2 flex items-center gap-2">
+            <div className="mb-2 flex items-center gap-2 mt-10">
               <Switch checked={logoRemoved} onCheckedChange={setLogoRemoved} id="qlogo" />
               <label htmlFor="qlogo" className="text-sm">Quitar logo (+30,000 Gs)</label>
             </div>
             {!logoRemoved && (
-              <Select value={logoPos} onValueChange={v => setLogoPos(v as typeof logoPos)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Posición del logo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="top-left">Superior Izquierda</SelectItem>
-                  <SelectItem value="top-right">Superior Derecha</SelectItem>
-                  <SelectItem value="bottom-left">Inferior Izquierda</SelectItem>
-                  <SelectItem value="bottom-right">Inferior Derecha</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="mt-5 mb-2">
+                <span className="text-sm font-semibold text-white block mb-1">Posición del logo</span>
+                <Select value={logoPos} onValueChange={v => setLogoPos(v as typeof logoPos)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Posición del logo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="top-left">Superior Izquierda</SelectItem>
+                    <SelectItem value="top-right">Superior Derecha</SelectItem>
+                    <SelectItem value="bottom-left">Inferior Izquierda</SelectItem>
+                    <SelectItem value="bottom-right">Inferior Derecha</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
           {/* Paso 5: RGB */}
@@ -617,7 +626,7 @@ export default function PersonalizarPage() {
               }}>5</span>
               <span className="font-bold">Luces RGB</span>
             </div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 mt-10">
               <Switch checked={rgb} onCheckedChange={setRgb} id="rgb" />
               <label htmlFor="rgb" className="text-sm">Activar RGB (+50,000 Gs)</label>
             </div>
