@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 
@@ -43,6 +44,8 @@ export default function PersonalizarPage() {
   const [texts, setTexts] = useState<{ id: string; content: string; font: string }[]>([]);
   const [activeFont, setActiveFont] = useState(FONTS[0].value);
   const [logoObj, setLogoObj] = useState<Textbox | null>(null);
+  const [textColor, setTextColor] = useState("#ffffff");
+  // const [textInput, setTextInput] = useState("");
 
   const { addItem } = useCart();
 
@@ -108,19 +111,21 @@ export default function PersonalizarPage() {
     fc.renderAll();
   };
 
+  const [textInput, setTextInput] = useState("");
   const addText = () => {
-    if (!fabricCanvas) return;
+    if (!fabricCanvas || !textInput.trim()) return;
     const id = `${Date.now()}`;
-    const tb = new Textbox("Tu texto", {
+    const tb = new Textbox(textInput, {
       fontFamily: activeFont,
-      fill: "#e5e7eb",
+      fill: textColor,
       fontSize: 28,
       editable: true,
       left: 40,
       top: 40,
     } as any);
     fabricCanvas.add(tb);
-    setTexts((t) => [...t, { id, content: "Tu texto", font: activeFont }]);
+    setTexts((t) => [...t, { id, content: textInput, font: activeFont }]);
+    setTextInput("");
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -259,26 +264,25 @@ export default function PersonalizarPage() {
 
   const { w, h } = parseSize(size);
 
+
   return (
     <section className="container py-8 grid gap-8 lg:grid-cols-[1fr_360px]">
       <div>
-        <div className={`relative rounded-xl border border-border bg-card p-3 ${rgb ? 'animate-rgb-glow' : ''}`}>
-          {rgb && <div aria-hidden className="led-gradient-ring pointer-events-none absolute inset-0 rounded-xl" />}
-          <div className="relative flex items-center justify-center w-full h-full bg-white rounded-lg overflow-hidden border border-border">
-            <canvas
-              ref={canvasRef}
-              className="absolute"
-              style={{ width: "100%", height: "100%" }}
-            />
-          </div>
-
+        {/* Título y subtítulo */}
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-primary mb-2">Personaliza Tu Mousepad</h1>
+          <p className="text-muted-foreground text-lg">Diseña tu mousepad gamer perfecto con nuestro editor avanzado</p>
         </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {/* Tamaño */}
-          <div className="grid gap-2">
-            <label className="text-sm">Tamaño</label>
+
+        {/* Paso 1 y 2: Tamaño e Imagen */}
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
+          <div className="rounded-xl bg-card border p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="step-badge bg-cyan-500 text-white">1</span>
+              <span className="font-bold">Seleccionar Tamaño</span>
+            </div>
             <Select value={size} onValueChange={setSize}>
-              <SelectTrigger className="w-1/4 min-w-[150px]">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecciona tamaño" />
               </SelectTrigger>
               <SelectContent>
@@ -288,10 +292,11 @@ export default function PersonalizarPage() {
               </SelectContent>
             </Select>
           </div>
-
-          {}
-          <div className="grid gap-2">
-            <label className="text-sm">Subir imagen</label>
+          <div className="rounded-xl bg-card border p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="step-badge bg-fuchsia-500 text-white">2</span>
+              <span className="font-bold">Subir Imagen</span>
+            </div>
             <input
               id="upload-image"
               type="file"
@@ -302,118 +307,146 @@ export default function PersonalizarPage() {
             <Button
               type="button"
               onClick={() => document.getElementById("upload-image")?.click()}
-              className="w-1/4 min-w-[150px] btn-hero "
+              className="w-full btn-hero"
             >
-              Seleccionar imagen
+              Seleccionar Imagen
             </Button>
           </div>
+        </div>
 
-          {/* Fuente */}
-          <div className="grid gap-2">
-            <label className="text-sm">Fuente del texto</label>
-            <Select value={activeFont} onValueChange={setActiveFont}>
-              <SelectTrigger className="w-1/4 min-w-[150px]">
-                <SelectValue placeholder="Selecciona fuente" />
-              </SelectTrigger>
-              <SelectContent>
-                {FONTS.map((f) => (
-                  <SelectItem key={f.value} value={f.value}>
-                    <span style={{ fontFamily: f.value }}>{f.label}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Canvas con título */}
+        <div className="rounded-xl bg-card border p-5 mb-6">
+          <div className={`relative rounded-xl bg-black/80 p-2 ${rgb ? 'animate-rgb-glow' : ''}`}> 
+            {rgb && <div aria-hidden className="led-gradient-ring pointer-events-none absolute inset-0 rounded-xl" />}
+            <div className="relative flex items-center justify-center w-full h-full rounded-lg overflow-hidden">
+              <canvas
+                ref={canvasRef}
+                className="absolute"
+                style={{ width: "100%", height: "100%" }}
+              />
+            </div>
           </div>
+        </div>
 
-          {/* Agregar texto */}
-          <div className="grid gap-2">
-            <label className="text-sm">Texto</label>
-            <Button type="button" onClick={addText} className="w-1/4 min-w-[150px] btn-hero ">
-              Agregar texto
-            </Button>
+        {/* Paso 3, 4, 5: Texto, Logo, RGB */}
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* Paso 3: Texto */}
+          <div className="rounded-xl bg-card border p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="step-badge bg-green-500 text-white">3</span>
+              <span className="font-bold">Agregar Texto</span>
+            </div>
+            <div className="mb-2">
+              <div className="flex gap-2 items-center">
+                <Input
+                  placeholder="Ingresa tu texto..."
+                  className="mb-2 flex-1"
+                  value={textInput}
+                  onChange={e => setTextInput(e.target.value)}
+                />
+                {/* Selector de color para el texto */}
+                <ColorPicker color={textColor} onChange={setTextColor} />
+              </div>
+              <div className="flex gap-2">
+                <Select value={activeFont} onValueChange={setActiveFont}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Fuente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FONTS.map((f) => (
+                      <SelectItem key={f.value} value={f.value}>
+                        <span style={{ fontFamily: f.value }}>{f.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" onClick={addText} className="btn-hero">T Agregar Texto</Button>
+              </div>
+            </div>
           </div>
-
-          {/* RGB */}
-          <div className="flex items-center gap-2">
-            <Switch checked={rgb} onCheckedChange={setRgb} id="rgb" />
-            <label htmlFor="rgb" className="text-sm">Activar RGB (+50 000 Gs)</label>
-          </div>
-
-          
-          <div className="flex items-center gap-2">
-            <Checkbox id="qlogo" checked={logoRemoved} onCheckedChange={(v) => setLogoRemoved(Boolean(v))} />
-            <label htmlFor="qlogo" className="text-sm">Quitar logo (+30 000 Gs)</label>
-          </div>
-
-       
-          <div className="grid gap-2 md:col-span-2">
-            <label className="text-sm">Posición del logo</label>
+          {/* Paso 4: Logo */}
+          <div className="rounded-xl bg-card border p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="step-badge bg-orange-500 text-white">4</span>
+              <span className="font-bold">Logo Dr Mousepad</span>
+            </div>
+            <div className="mb-2 flex items-center gap-2">
+              <Switch checked={logoRemoved} onCheckedChange={setLogoRemoved} id="qlogo" />
+              <label htmlFor="qlogo" className="text-sm">Quitar logo (+30,000 Gs)</label>
+            </div>
             <Select value={logoPos} onValueChange={v => setLogoPos(v as typeof logoPos)} disabled={logoRemoved}>
-              <SelectTrigger className="w-1/4 min-w-[150px]">
-                <SelectValue placeholder="Selecciona posición" />
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Posición del logo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="top-left">Arriba / Izquierda</SelectItem>
-                <SelectItem value="top-right">Arriba / Derecha</SelectItem>
-                <SelectItem value="bottom-left">Abajo / Izquierda</SelectItem>
-                <SelectItem value="bottom-right">Abajo / Derecha</SelectItem>
+                <SelectItem value="top-left">Superior Izquierda</SelectItem>
+                <SelectItem value="top-right">Superior Derecha</SelectItem>
+                <SelectItem value="bottom-left">Inferior Izquierda</SelectItem>
+                <SelectItem value="bottom-right">Inferior Derecha</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          {/* Recorte */}
-          <div className="flex gap-2 md:col-span-2">
-            <Button variant="secondary" onClick={toggleCrop} className="w-1/4 min-w-[150px] btn-hero ">
-              Activar/Desactivar recorte
-            </Button>
-            <Button onClick={applyCrop} className="w-1/4 min-w-[150px] btn-hero ">
-              Aplicar recorte
-            </Button>
+          {/* Paso 5: RGB */}
+          <div className="rounded-xl bg-card border p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="step-badge bg-pink-500 text-white">5</span>
+              <span className="font-bold">Luces RGB</span>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <Switch checked={rgb} onCheckedChange={setRgb} id="rgb" />
+              <label htmlFor="rgb" className="text-sm">Activar RGB (+50,000 Gs)</label>
+            </div>
+            <p className="text-xs text-muted-foreground">Añade efectos de luces LED sincronizables</p>
           </div>
         </div>
-
       </div>
-
-      {/* Side Panel (no miniatura) */}
+      {/* Aside derecho: Resumen */}
       <aside className="lg:sticky lg:top-24 h-fit rounded-xl border border-border bg-card p-5">
-        <h3 className="text-lg font-semibold mb-4">Resumen</h3>
-        <ul className="space-y-2 text-sm">
-          {/* Tamaño con precio base */}
-          <li className="flex justify-between">
-            <span className="text-muted-foreground">Tamaño: {size}</span>
-            <span className="font-medium">200 000 Gs</span>
+        <h3 className="text-lg font-bold mb-4 text-primary">Resumen del Pedido</h3>
+        <ul className="space-y-2 text-sm mb-4">
+          <li className="flex justify-between items-center">
+            <span>Tamaño:</span>
+            <span className="font-bold text-base">{size}</span>
           </li>
-
-          {/* Logo */}
-          <li className="flex justify-between">
-            <span className="text-muted-foreground">Logo:</span>
-            <span className="font-medium">
-              {logoRemoved ? "+30 000 Gs" : "Incluido"}
+          <li className="flex justify-between items-center">
+            <span>Logo Dr Mousepad:</span>
+            <span className="font-bold flex items-center gap-1">
+              {logoRemoved
+                ? <><span className="text-red-500 text-lg">&#10006;</span> <span className="text-red-500">Removido</span></>
+                : <><span className="text-green-400 text-lg">&#10003;</span> Incluido</>}
             </span>
           </li>
-
-          {/* RGB */}
-          <li className="flex justify-between">
-            <span className="text-muted-foreground">RGB:</span>
-            <span className="font-medium">
-              {rgb ? "+50 000 Gs" : "No"}
+          <li className="flex justify-between items-center">
+            <span>Luces RGB:</span>
+            <span className="font-bold flex items-center gap-1">
+              {rgb
+                ? <><span className="text-green-400 text-lg">&#10003;</span> Activado</>
+                : <span className="text-red-500 font-bold flex items-center gap-1"><span className="text-lg">&#10006;</span>Desactivado</span>}
             </span>
           </li>
-
-
         </ul>
-
-        {/* Total */}
-        <div className="mt-4 flex items-center justify-between border-t pt-3">
-          <span className="text-sm text-muted-foreground">Total</span>
-          <span className="text-2xl font-bold">{total.toLocaleString()} Gs</span>
-        </div>
-
-        <Button className="w-full mt-4 btn-hero " onClick={handleAddToCart}>
-          Agregar al carrito
+        <hr className="my-2 border-border" />
+        <div className="mb-2 flex justify-between text-sm"><span>Precio base:</span><span>{BASE_PRICE.toLocaleString()} Gs</span></div>
+        {logoRemoved && (
+          <div className="mb-2 flex justify-between text-sm"><span>Quitar logo:</span><span>+{EXTRA_LOGO.toLocaleString()} Gs</span></div>
+        )}
+        {rgb && (
+          <div className="mb-2 flex justify-between text-sm"><span>Luces RGB:</span><span>+{EXTRA_RGB.toLocaleString()} Gs</span></div>
+        )}
+        <div className="mb-4 flex justify-between text-lg font-bold text-primary"><span>Total:</span><span className="text-cyan-400">{total.toLocaleString()} Gs</span></div>
+        <Button className="w-full btn-hero mb-4 flex items-center justify-center gap-2" onClick={handleAddToCart}>
+          <span className="material-icons" style={{ fontSize: '1.2em' }}></span>
+          Agregar al Carrito
         </Button>
-      </aside>
 
+        <div className="bg-background/80 rounded-lg p-3 text-xs text-muted-foreground border mt-2">
+          <ul className="space-y-1">
+            <li><span className="text-cyan-400 mr-1">&#10003;</span> Envío gratis a todo Paraguay</li>
+            <li><span className="text-cyan-400 mr-1">&#10003;</span> Producción 3-5 días hábiles</li>
+            <li><span className="text-cyan-400 mr-1">&#10003;</span> Garantía de 1 año</li>
+          </ul>
+        </div>
+      </aside>
     </section>
   );
 }

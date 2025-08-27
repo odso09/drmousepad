@@ -1,3 +1,28 @@
+/* Badge circular para los pasos de Personalizar */
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 1.2rem;
+  background: #fff;
+  color: inherit;
+  box-shadow: 0 0 8px 0 rgba(0,0,0,0.12);
+  margin-right: 0.5rem;
+  border: 3px solid currentColor;
+}
+.step-badge.bg-cyan-500,
+.step-badge.bg-fuchsia-500,
+.step-badge.bg-green-500,
+.step-badge.bg-orange-500,
+.step-badge.bg-pink-500 {
+  background: currentColor;
+  color: #fff;
+  border: none;
+}
 #root {
   max-width: 1280px;
   margin: 0 auto;
