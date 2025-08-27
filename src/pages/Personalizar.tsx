@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Image as FabricImage, Rect, Textbox } from "fabric";
+import { Canvas as FabricCanvas, Image as FabricImage, Rect, Textbox, Object as FabricObject } from "fabric";
 const logoUrl = new URL("../assets/logo.png", import.meta.url).href;
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -44,7 +44,7 @@ export default function PersonalizarPage() {
   const [logoPos, setLogoPos] = useState<"top-left" | "top-right" | "bottom-left" | "bottom-right">("bottom-right");
   const [texts, setTexts] = useState<{ id: string; content: string; font: string }[]>([]);
   const [activeFont, setActiveFont] = useState(FONTS[0].value);
-  const [logoObj, setLogoObj] = useState<Textbox | null>(null);
+  const [logoObj, setLogoObj] = useState<FabricObject | null>(null);
   const [textColor, setTextColor] = useState("#ffffff");
   // const [textInput, setTextInput] = useState("");
 
@@ -63,62 +63,38 @@ export default function PersonalizarPage() {
       backgroundColor: "#0b0f14",
       selection: true,
     });
-
-    // enable drawing controls look & feel
     fc.preserveObjectStacking = true;
     setFabricCanvas(fc);
 
-
-    // Add official logo image (main, movable) con logs de depuración
-    // Cargar el logo usando un objeto Image para evitar problemas de CORS/timing
-    console.log('Intentando cargar logo en canvas:', logoUrl);
-    const imgEl = new window.Image();
-    imgEl.crossOrigin = 'anonymous';
-    imgEl.onload = () => {
-      const fabricImg = new FabricImage(imgEl, {
-        selectable: true,
-        shadow: "0 0 10px rgba(167,139,250,0.6)",
+    // Cargar el logo y posicionarlo en la esquina seleccionada
+    (FabricImage.fromURL(logoUrl) as Promise<FabricImage>)
+      .then((img) => {
+        if (!img) {
+          console.error('No se pudo cargar el logo:', logoUrl);
+          return;
+        }
+        const maxWidth = 180;
+        const maxHeight = 80;
+        const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+        img.set({
+          scaleX: scale,
+          scaleY: scale,
+          selectable: true,
+          shadow: "0 0 10px rgba(167,139,250,0.6)",
+        });
+        fc.add(img);
+        setLogoObj(img);
+        // Esperar a que la imagen esté lista para posicionar
+        setTimeout(() => {
+          positionLogo(fc, img, logoPos);
+          fc.renderAll();
+        }, 100);
+      })
+      .catch((e) => {
+        console.error('No se pudo cargar el logo (catch):', logoUrl, e);
       });
-      // Escalado automático para que el logo siempre sea visible
-      const maxWidth = 180;
-      const maxHeight = 80;
-      const scale = Math.min(maxWidth / fabricImg.width, maxHeight / fabricImg.height, 1);
-      fabricImg.set({
-        scaleX: scale,
-        scaleY: scale,
-      });
-      fc.add(fabricImg);
-      setLogoObj(fabricImg);
-      positionLogo(fc, fabricImg, logoPos);
-      console.log('Logo cargado en canvas:', fabricImg.width, fabricImg.height);
-    };
-    imgEl.onerror = (e) => {
-      console.error('No se pudo cargar el logo:', logoUrl, e);
-    };
-    imgEl.src = logoUrl;
-
-    // Add a second logo at the top-left (fixed, not selectable)
-    (FabricImage.fromURL as (url: string, callback: (img: any) => void) => void)(logoUrl, (img: any) => {
-      if (!img) return;
-      const maxWidth = 100;
-      const maxHeight = 40;
-      const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
-      img.set({
-        scaleX: scale,
-        scaleY: scale,
-        left: 10,
-        top: 10,
-        selectable: false,
-        evented: false,
-        shadow: "0 0 6px rgba(167,139,250,0.4)",
-      });
-      fc.add(img);
-      fc.sendToBack(img);
-      fc.renderAll();
-    });
 
     return () => { void fc.dispose(); };
-
   }, []);
 
  
@@ -133,16 +109,22 @@ export default function PersonalizarPage() {
     if (logoObj) positionLogo(fabricCanvas, logoObj, logoPos);
   }, [size, fabricCanvas, logoObj, logoPos]);
 
-  const positionLogo = (fc: FabricCanvas, lg: Textbox, pos: typeof logoPos) => {
+  const positionLogo = (fc: FabricCanvas, lg: FabricObject, pos: typeof logoPos) => {
     const pad = 12;
-    const { width = 0, height = 0 } = fc;
-    const w = typeof width === 'number' ? width : 0;
-    const h = typeof height === 'number' ? height : 0;
-    lg.set({});
-    if (pos === "top-left") lg.set({ left: pad, top: pad });
-    if (pos === "top-right") lg.set({ left: w - (lg.width || 0) - pad, top: pad });
-    if (pos === "bottom-left") lg.set({ left: pad, top: h - (lg.height || 0) - pad });
-    if (pos === "bottom-right") lg.set({ left: w - (lg.width || 0) - pad, top: h - (lg.height || 0) - pad });
+    const w = typeof fc.width === 'number' ? fc.width : 0;
+    const h = typeof fc.height === 'number' ? fc.height : 0;
+    let left = pad, top = pad;
+    if (pos === "top-right") {
+      left = w - (lg.getScaledWidth ? lg.getScaledWidth() : (lg.width || 0)) - pad;
+      top = pad;
+    } else if (pos === "bottom-left") {
+      left = pad;
+      top = h - (lg.getScaledHeight ? lg.getScaledHeight() : (lg.height || 0)) - pad;
+    } else if (pos === "bottom-right") {
+      left = w - (lg.getScaledWidth ? lg.getScaledWidth() : (lg.width || 0)) - pad;
+      top = h - (lg.getScaledHeight ? lg.getScaledHeight() : (lg.height || 0)) - pad;
+    }
+    lg.set({ left, top });
     fc.bringObjectToFront(lg as any);
     fc.renderAll();
   };
