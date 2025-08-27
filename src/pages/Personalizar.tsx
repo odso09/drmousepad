@@ -352,6 +352,7 @@ export default function PersonalizarPage() {
             <div className="flex items-center gap-3 mb-3">
               <span className="step-badge bg-green-500 text-white">3</span>
               <span className="font-bold">Agregar Texto</span>
+              <span className="font-bold text-base ml-auto">Color</span>
             </div>
             <div className="mb-2">
               <div className="flex gap-2 items-center">
@@ -361,8 +362,9 @@ export default function PersonalizarPage() {
                   value={textInput}
                   onChange={e => setTextInput(e.target.value)}
                 />
-                {/* Selector de color para el texto */}
-                <ColorPicker color={textColor} onChange={setTextColor} />
+                <div className="flex flex-col justify-center items-center" style={{height: 40, marginTop: -6}}>
+                  <ColorPicker color={textColor} onChange={setTextColor} />
+                </div>
               </div>
               <div className="flex gap-2">
                 <Select value={activeFont} onValueChange={setActiveFont}>
