@@ -634,8 +634,8 @@ export default function PersonalizarPage() {
           </div>
         </div>
       </div>
-      {/* Aside derecho: Resumen */}
-      <aside className="lg:sticky lg:top-24 h-fit rounded-xl border border-border bg-card p-5">
+  {/* Aside derecho: Resumen */}
+  <aside className="lg:sticky lg:top-[172px] mt-0 lg:mt-[110px] h-fit rounded-xl border border-border bg-card p-5">
   <h3 className="text-lg font-bold mb-4 text-cyber">Resumen del Pedido</h3>
         <ul className="space-y-2 text-sm mb-4">
           <li className="flex justify-between items-center">
