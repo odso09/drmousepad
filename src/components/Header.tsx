@@ -10,7 +10,7 @@ export const Header = () => {
 <header className="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b border-border p-[15px]">
 
       <div className="container flex items-center justify-between h-16">
-        <Link to="/" className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
+  <Link to="/" className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md">
 					<div className="flex items-center gap-4">
 						<img src={logo} alt="Dr Mousepad" className="h-24" />
 						<div>
