@@ -749,7 +749,11 @@ export default function PersonalizarPage() {
           <div className="mb-2 flex justify-between text-sm"><span>Luces RGB:</span><span>+{EXTRA_RGB.toLocaleString()} Gs</span></div>
         )}
   <div className="mb-4 flex justify-between text-lg font-bold text-cyber"><span>Total:</span><span className="text-cyan-400">{total.toLocaleString()} Gs</span></div>
-  <Button className="w-full btn-purple-yellow btn-purple-glow btn-purple-pulse mb-4 flex items-center justify-center gap-2" onClick={handleAddToCart}>
+  <Button
+    className="w-full btn-purple-yellow btn-purple-glow mb-4 flex items-center justify-center gap-2"
+    style={{ animation: 'btn-pulse 1.6s ease-in-out infinite' }}
+    onClick={handleAddToCart}
+  >
           <span className="material-icons" style={{ fontSize: '1.2em' }}></span>
           Agregar al Carrito
         </Button>
