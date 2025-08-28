@@ -482,7 +482,7 @@ export default function PersonalizarPage() {
                 fontSize: '1.2rem',
                 marginRight: '0.5rem',
                 color: '#fff',
-                background: '#06b6d4', // cyan
+                background: 'var(--gradient-cyber)',
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>1</span>
               <span className="font-bold">Seleccionar tamaño del mousepad</span>
@@ -511,7 +511,7 @@ export default function PersonalizarPage() {
                 fontSize: '1.2rem',
                 marginRight: '0.5rem',
                 color: '#fff',
-                background: '#d946ef', // fuchsia
+                background: 'var(--gradient-cyber)',
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>2</span>
               <span className="font-bold">Subir Imagen</span>
@@ -605,7 +605,7 @@ export default function PersonalizarPage() {
                 fontSize: '1.2rem',
                 marginRight: '0.5rem',
                 color: '#fff',
-                background: '#22c55e', // green
+                background: 'var(--gradient-cyber)',
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>3</span>
               <span className="font-bold">Agregar Texto</span>
@@ -662,7 +662,7 @@ export default function PersonalizarPage() {
                 fontSize: '1.2rem',
                 marginRight: '0.5rem',
                 color: '#fff',
-                background: '#fb923c', // orange
+                background: 'var(--gradient-cyber)',
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>4</span>
               <span className="font-bold">Logo Dr Mousepad</span>
@@ -702,7 +702,7 @@ export default function PersonalizarPage() {
                 fontSize: '1.2rem',
                 marginRight: '0.5rem',
                 color: '#fff',
-                background: '#ec4899', // pink
+                background: 'var(--gradient-cyber)',
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>5</span>
               <span className="font-bold">Luces RGB</span>
