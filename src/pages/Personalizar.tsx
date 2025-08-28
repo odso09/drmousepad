@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Canvas as FabricCanvas, Image as FabricImage, Rect, Textbox, Object as FabricObject } from "fabric";
+import { Canvas as FabricCanvas, Image as FabricImage, Rect, Textbox, Object as FabricObject, Line as FabricLine } from "fabric";
 const logoUrl = new URL("../assets/logo.png", import.meta.url).href;
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -86,8 +86,8 @@ export default function PersonalizarPage() {
     setLogoPos(item.data.logo.position);
     setTexts(item.data.texts);
     // Restaurar el canvas si hay json guardado
-    if (item.data.canvasJson && fabricCanvas) {
-      fabricCanvas.loadFromJSON(item.data.canvasJson, () => {
+    if (item.canvasJson && fabricCanvas) {
+      fabricCanvas.loadFromJSON(item.canvasJson, () => {
         fabricCanvas.renderAll();
       });
     }
@@ -138,7 +138,64 @@ export default function PersonalizarPage() {
         console.error('No se pudo cargar el logo (catch):', logoUrl, e);
       });
 
-    return () => { void fc.dispose(); };
+    // Dos líneas guía horizontales: una gira a la derecha, otra a la izquierda
+    let guideLines: [FabricLine?, FabricLine?] = [null, null];
+    const addOrUpdateGuides = () => {
+      if (!fc) return;
+      const obj = fc.getActiveObject();
+      if (!obj) return;
+      // Eliminar líneas previas
+      guideLines.forEach(line => { if (line) fc.remove(line as unknown as FabricObject); });
+      guideLines = [null, null];
+      const w = typeof fc.width === 'number' ? fc.width : 0;
+      const h = typeof fc.height === 'number' ? fc.height : 0;
+      const cx = w / 2;
+      const cy = h / 2;
+      const len = w * 0.8;
+      // Ángulo de la imagen
+      const baseAngle = (obj.angle || 0) * Math.PI / 180;
+      // Línea 1: gira igual que el objeto (sentido horario)
+      const angle1 = baseAngle;
+      // Línea 2: gira en sentido contrario (antihorario)
+      const angle2 = -baseAngle;
+      // Primera línea
+      const x1a = cx - (len/2) * Math.cos(angle1);
+      const y1a = cy - (len/2) * Math.sin(angle1);
+      const x2a = cx + (len/2) * Math.cos(angle1);
+      const y2a = cy + (len/2) * Math.sin(angle1);
+      // Segunda línea
+      const x1b = cx - (len/2) * Math.cos(angle2);
+      const y1b = cy - (len/2) * Math.sin(angle2);
+      const x2b = cx + (len/2) * Math.cos(angle2);
+      const y2b = cy + (len/2) * Math.sin(angle2);
+      // Líneas verdes continuas
+      const line1 = new FabricLine([x1a, y1a, x2a, y2a], {
+        stroke: '#22c55e', strokeWidth: 3, selectable: false, evented: false, excludeFromExport: true, name: 'guideLine', hoverCursor: 'default',
+      } as any);
+      const line2 = new FabricLine([x1b, y1b, x2b, y2b], {
+        stroke: '#22c55e', strokeWidth: 3, selectable: false, evented: false, excludeFromExport: true, name: 'guideLine', hoverCursor: 'default',
+      } as any);
+      fc.add(line1 as unknown as FabricObject);
+      fc.add(line2 as unknown as FabricObject);
+      fc.bringObjectToFront(line1 as unknown as FabricObject);
+      fc.bringObjectToFront(line2 as unknown as FabricObject);
+      guideLines = [line1, line2];
+      fc.renderAll();
+    };
+    const removeGuides = () => {
+      if (!fc) return;
+      guideLines.forEach(line => { if (line) fc.remove(line as unknown as FabricObject); });
+      guideLines = [null, null];
+      fc.renderAll();
+    };
+    fc.on('object:rotating', addOrUpdateGuides);
+    fc.on('mouse:up', removeGuides);
+
+    return () => {
+      void fc.dispose();
+      fc.off('object:rotating', addOrUpdateGuides);
+      fc.off('mouse:up', removeGuides);
+    };
   }, []);
 
  
@@ -320,8 +377,8 @@ export default function PersonalizarPage() {
         extras: { logoRemoved, rgb },
         total,
         thumbnail: dataUrl,
-        canvasJson,
       },
+      canvasJson,
     });
     toast.success("Agregado al carrito");
   };

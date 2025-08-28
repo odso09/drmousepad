@@ -21,7 +21,10 @@ export type CartItem = {
   id: string;
   data: PersonalizationData;
   quantity: number;
+  canvasJson?: any;
 };
+
+
 
 type CartContextValue = {
   items: CartItem[];
