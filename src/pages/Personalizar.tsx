@@ -464,7 +464,7 @@ export default function PersonalizarPage() {
         {/* Título y subtítulo */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-extrabold text-cyber mb-2">Personaliza Tu Mousepad</h1>
-          <p className="text-muted-foreground text-lg">Diseña tu mousepad gamer perfecto con nuestro editor avanzado</p>
+          <p className="text-muted-foreground text-lg">Diseña tu Mousepad perfecto con nuestro editor avanzado</p>
         </div>
 
         {/* Paso 1 y 2: Tamaño e Imagen */}
@@ -485,7 +485,7 @@ export default function PersonalizarPage() {
                   background: 'linear-gradient(90deg, #0891b2 0%, #6d28d9 100%)',
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>1</span>
-              <span className="font-bold">Seleccionar tamaño del mousepad</span>
+              <span className="font-bold">Seleccionar tamaño del Mousepad</span>
             </div>
             <Select value={size} onValueChange={setSize}>
               <SelectTrigger className="w-full">
@@ -526,7 +526,7 @@ export default function PersonalizarPage() {
             <Button
               type="button"
               onClick={() => document.getElementById("upload-image")?.click()}
-              className="w-full btn-purple-yellow"
+              className="w-full btn-purple-yellow btn-purple-glow"
             >
               Seleccionar Imagen
             </Button>
@@ -642,7 +642,7 @@ export default function PersonalizarPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" onClick={addText} className="btn-purple-yellow">
+                <Button type="button" onClick={addText} className="btn-purple-yellow btn-purple-glow">
                   Agregar Texto
                 </Button>
               </div>
@@ -749,7 +749,7 @@ export default function PersonalizarPage() {
           <div className="mb-2 flex justify-between text-sm"><span>Luces RGB:</span><span>+{EXTRA_RGB.toLocaleString()} Gs</span></div>
         )}
   <div className="mb-4 flex justify-between text-lg font-bold text-cyber"><span>Total:</span><span className="text-cyan-400">{total.toLocaleString()} Gs</span></div>
-  <Button className="w-full btn-purple-yellow mb-4 flex items-center justify-center gap-2" onClick={handleAddToCart}>
+  <Button className="w-full btn-purple-yellow btn-purple-glow btn-purple-pulse mb-4 flex items-center justify-center gap-2" onClick={handleAddToCart}>
           <span className="material-icons" style={{ fontSize: '1.2em' }}></span>
           Agregar al Carrito
         </Button>
