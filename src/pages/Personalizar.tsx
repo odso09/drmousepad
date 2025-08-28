@@ -482,7 +482,7 @@ export default function PersonalizarPage() {
                 fontSize: '1.2rem',
                 marginRight: '0.5rem',
                 color: '#fff',
-                background: 'var(--gradient-cyber)',
+                  background: 'linear-gradient(90deg, #0891b2 0%, #6d28d9 100%)',
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>1</span>
               <span className="font-bold">Seleccionar tamaño del mousepad</span>
@@ -511,7 +511,7 @@ export default function PersonalizarPage() {
                 fontSize: '1.2rem',
                 marginRight: '0.5rem',
                 color: '#fff',
-                background: 'var(--gradient-cyber)',
+                  background: 'linear-gradient(90deg, #0891b2 0%, #6d28d9 100%)',
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>2</span>
               <span className="font-bold">Subir Imagen</span>
@@ -526,7 +526,7 @@ export default function PersonalizarPage() {
             <Button
               type="button"
               onClick={() => document.getElementById("upload-image")?.click()}
-              className="w-full btn-hero-static"
+              className="w-full btn-purple-yellow"
             >
               Seleccionar Imagen
             </Button>
@@ -564,7 +564,7 @@ export default function PersonalizarPage() {
                       width: 32,
                       height: 32,
                       background: 'rgba(30,41,59,0.92)',
-                      border: '2px solid #e11d48',
+                      border: '2px solid #3a0ca3',
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
@@ -576,7 +576,7 @@ export default function PersonalizarPage() {
                     title="Eliminar"
                   >
                     {/* Trash bin SVG icon */}
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ pointerEvents: 'none' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3a0ca3" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ pointerEvents: 'none' }}>
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
                       <line x1="10" y1="11" x2="10" y2="17" />
@@ -605,7 +605,7 @@ export default function PersonalizarPage() {
                 fontSize: '1.2rem',
                 marginRight: '0.5rem',
                 color: '#fff',
-                background: 'var(--gradient-cyber)',
+                  background: 'linear-gradient(90deg, #0891b2 0%, #6d28d9 100%)',
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>3</span>
               <span className="font-bold">Agregar Texto</span>
@@ -642,7 +642,7 @@ export default function PersonalizarPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" onClick={addText} className="btn-hero-static">
+                <Button type="button" onClick={addText} className="btn-purple-yellow">
                   Agregar Texto
                 </Button>
               </div>
@@ -662,7 +662,7 @@ export default function PersonalizarPage() {
                 fontSize: '1.2rem',
                 marginRight: '0.5rem',
                 color: '#fff',
-                background: 'var(--gradient-cyber)',
+                  background: 'linear-gradient(90deg, #0891b2 0%, #6d28d9 100%)',
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>4</span>
               <span className="font-bold">Logo Dr Mousepad</span>
@@ -702,7 +702,7 @@ export default function PersonalizarPage() {
                 fontSize: '1.2rem',
                 marginRight: '0.5rem',
                 color: '#fff',
-                background: 'var(--gradient-cyber)',
+                  background: 'linear-gradient(90deg, #0891b2 0%, #6d28d9 100%)',
                 boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
               }}>5</span>
               <span className="font-bold">Luces RGB</span>
@@ -749,7 +749,7 @@ export default function PersonalizarPage() {
           <div className="mb-2 flex justify-between text-sm"><span>Luces RGB:</span><span>+{EXTRA_RGB.toLocaleString()} Gs</span></div>
         )}
   <div className="mb-4 flex justify-between text-lg font-bold text-cyber"><span>Total:</span><span className="text-cyan-400">{total.toLocaleString()} Gs</span></div>
-        <Button className="w-full btn-hero mb-4 flex items-center justify-center gap-2" onClick={handleAddToCart}>
+  <Button className="w-full btn-purple-yellow mb-4 flex items-center justify-center gap-2" onClick={handleAddToCart}>
           <span className="material-icons" style={{ fontSize: '1.2em' }}></span>
           Agregar al Carrito
         </Button>

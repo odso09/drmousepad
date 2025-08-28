@@ -10,14 +10,16 @@
   font-size: 1.2rem;
   margin-right: 0.5rem;
   color: #fff;
-  background: #06b6d4; /* cyan-500 por defecto */
+  background: linear-gradient(90deg, #22d3ee 0%, #a78bfa 100%);
   box-shadow: 0 0 8px 0 rgba(0,0,0,0.12);
   border: none;
 }
-.step-badge.step-badge-fuchsia { background: #d946ef; }
-.step-badge.step-badge-green { background: #22c55e; }
-.step-badge.step-badge-orange { background: #fb923c; }
-.step-badge.step-badge-pink { background: #ec4899; }
+.step-badge.step-badge-fuchsia,
+.step-badge.step-badge-green,
+.step-badge.step-badge-orange,
+.step-badge.step-badge-pink {
+  background: linear-gradient(90deg, #22d3ee 0%, #a78bfa 100%);
+}
 #root {
   max-width: 1280px;
   margin: 0 auto;

@@ -1,3 +1,24 @@
+/* Botón tendencia: fondo púrpura oscuro (referencia imagen) y letras amarillo claro, con efectos originales */
+.btn-purple-yellow {
+  background: #003049 !important;
+  color: #ffffe0 !important;
+  font-weight: bold;
+  border-radius: 0.75rem;
+  box-shadow: 0 0 16px 0 #003049cc;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-purple-yellow:hover, .btn-purple-yellow:focus {
+  background: #003049 !important;
+  color: #ffffe0 !important;
+  box-shadow: 0 0 32px 0 #003049cc;
+  transform: translateY(-2px) scale(1.03);
+}
+.btn-purple-yellow:active {
+  background: #001d2e !important;
+  color: #ffffe0 !important;
+  box-shadow: 0 1px 4px 0 #00304999;
+  transform: translateY(0) scale(0.98);
+}
   .btn-hero-static {
     @apply text-primary-foreground px-10 py-4 rounded-xl font-bold text-lg;
     background: linear-gradient(100deg, #0ea5e9 0%, #6366f1 100%);
