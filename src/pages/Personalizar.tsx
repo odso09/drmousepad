@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Canvas as FabricCanvas, Image as FabricImage, Rect, Textbox, Object as FabricObject, Line as FabricLine } from "fabric";
 const logoUrl = new URL("../assets/logo.png", import.meta.url).href;
 import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -740,7 +741,7 @@ export default function PersonalizarPage() {
             <span>Logo Dr Mousepad:</span>
             <span className="font-bold flex items-center gap-1">
               {logoRemoved
-                ? <><span className="text-lg" style={{color:'#ef4444 !important'}}>&#10006;</span> <span className="text-red-500">Removido</span></>
+                ? <><X size={18} className="text-red-500" strokeWidth={3} /> <span className="text-red-500">Removido</span></>
                 : <><span className="text-green-400 text-lg">&#10003;</span> Incluido</>}
             </span>
           </li>
@@ -749,7 +750,7 @@ export default function PersonalizarPage() {
             <span className="font-bold flex items-center gap-1">
               {rgb
                 ? <><span className="text-green-400 text-lg">&#10003;</span> Activado</>
-                : <span className="text-red-500 font-bold flex items-center gap-1"><span className="text-lg" style={{color:'#ef4444 !important'}}>&#10006;</span>Desactivado</span>}
+                : <span className="text-red-500 font-bold flex items-center gap-1"><X size={18} className="text-red-500" strokeWidth={3} />Desactivado</span>}
             </span>
           </li>
         </ul>

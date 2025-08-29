@@ -54,7 +54,7 @@ export default function CartPage() {
           <aside className="h-fit rounded-lg border border-border p-5 bg-card">
             <h3 className="text-lg font-semibold mb-3">Resumen</h3>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Total</span>
+              <span className="text-sm">Total</span>
               <span className="text-2xl font-bold">{total.toLocaleString()} Gs</span>
             </div>
             <div className="mt-4 grid gap-2">
