@@ -526,7 +526,7 @@ export default function PersonalizarPage() {
             <Button
               type="button"
               onClick={() => document.getElementById("upload-image")?.click()}
-              className="w-full btn-purple-yellow btn-purple-glow"
+              className="w-full btn-hero-static"
             >
               Seleccionar Imagen
             </Button>
@@ -655,7 +655,7 @@ export default function PersonalizarPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" onClick={addText} className="btn-purple-yellow btn-purple-glow">
+                <Button type="button" onClick={addText} className="btn-hero-static">
                   Agregar Texto
                 </Button>
               </div>
