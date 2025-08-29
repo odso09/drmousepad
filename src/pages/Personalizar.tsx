@@ -762,7 +762,7 @@ export default function PersonalizarPage() {
         {rgb && (
           <div className="mb-2 flex justify-between text-sm"><span>Luces RGB:</span><span>+{EXTRA_RGB.toLocaleString()} Gs</span></div>
         )}
-  <div className="mb-4 flex justify-between text-lg font-bold text-cyber"><span>Total:</span><span className="text-cyan-400">{total.toLocaleString()} Gs</span></div>
+  <div className="mb-4 flex justify-between text-lg font-bold"><span style={{color:'#a259f7', fontSize:'1.4rem'}}>Total:</span><span style={{color:'#a259f7', fontWeight:'bold', fontSize:'1.4rem'}}>{total.toLocaleString()} Gs</span></div>
   <Button
     className="btn-hero text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full mb-4 flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
     onClick={handleAddToCart}
