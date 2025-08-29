@@ -763,13 +763,13 @@ export default function PersonalizarPage() {
         )}
   <div className="mb-4 flex justify-between text-lg font-bold text-cyber"><span>Total:</span><span className="text-cyan-400">{total.toLocaleString()} Gs</span></div>
   <Button
-    className="w-full btn-purple-yellow btn-purple-glow mb-4 flex items-center justify-center gap-2"
-    style={{ animation: 'btn-pulse 1.6s ease-in-out infinite' }}
+    className="btn-hero text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full mb-4 flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
     onClick={handleAddToCart}
+    aria-label="Agregar al Carrito"
   >
-          <span className="material-icons" style={{ fontSize: '1.2em' }}></span>
-          Agregar al Carrito
-        </Button>
+    <span className="material-icons" style={{ fontSize: '1.2em' }}></span>
+    Agregar al Carrito
+  </Button>
 
         <div className="bg-background/80 rounded-lg p-3 text-xs text-muted-foreground border mt-2">
           <ul className="space-y-1">

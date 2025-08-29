@@ -23,7 +23,7 @@ export default function CartPage() {
             {items.map((it) => (
               <div key={it.id} className="flex gap-4 border border-border rounded-lg p-3 bg-card">
                 {it.data.thumbnail && (
-                  <img src={it.data.thumbnail} alt="Diseño del mousepad" className="w-40 h-28 object-cover rounded" loading="lazy" />
+                  <img src={it.data.thumbnail} alt="Diseño del Mousepad" className="w-40 h-28 object-cover rounded" loading="lazy" />
                 )}
                 <div className="flex-1">
                   <div className="flex items-center justify-between gap-2">

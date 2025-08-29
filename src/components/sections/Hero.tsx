@@ -22,7 +22,7 @@ export const Hero = () => {
                 </h1>
 
                 <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl">
-                  Haz que tu escritorio hable de ti: Diseña tu propio mousepad,
+                  Haz que tu escritorio hable de ti: Diseña tu propio Mousepad,
                   enciende las luces RGB y transforma tu espacio.   
                 </p>
             </div>
@@ -30,7 +30,7 @@ export const Hero = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/personalizar">
                 <Button className="btn-hero text-lg px-8 py-6">
-                  Empieza a Personalizar
+                  Comienza a Personalizar
                 </Button>
               </Link>
             </div>

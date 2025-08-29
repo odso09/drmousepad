@@ -14,11 +14,11 @@ export const Hero = () => {
             Mousepad Gamer Personalizable
           </h1>
           <p className="mt-4 text-lg md:text-xl text-muted-foreground">
-            ¡Diseña tu propio mousepad gamer! Tamaños XL, logo, texto y luces RGB.
+            ¡Diseña tu propio Mousepad! Tamaños XL, logo, texto y luces RGB.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Button asChild size="lg" className="hover-scale shadow-[var(--shadow-neon)]">
-              <Link to="/personalizar">Empieza a personalizar</Link>
+              <Link to="/personalizar">Comienza a personalizar</Link>
             </Button>
             <ul className="flex flex-wrap gap-6 text-sm text-muted-foreground">
               <li>🚚 Envíos a todo el país</li>
