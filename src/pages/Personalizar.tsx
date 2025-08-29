@@ -764,7 +764,7 @@ export default function PersonalizarPage() {
         )}
   <div className="mb-4 flex justify-between text-lg font-bold"><span style={{color:'#a259f7', fontSize:'1.4rem'}}>Total:</span><span style={{color:'#a259f7', fontWeight:'bold', fontSize:'1.4rem'}}>{total.toLocaleString()} Gs</span></div>
   <Button
-    className="btn-hero text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full mb-4 flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
+  className="btn-hero text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full mt-16 mb-4 flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
     onClick={handleAddToCart}
     aria-label="Agregar al Carrito"
   >
