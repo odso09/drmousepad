@@ -27,10 +27,10 @@ export function ColorPicker({ color, onChange }: { color: string; onChange: (col
           width: size,
           height: size,
           borderRadius: '50%',
-          border: "2px solid #a78bfa",
+          border: "2px solid #0f172a", // azul marino
           background: color,
           cursor: "pointer",
-          boxShadow: show ? '0 0 0 3px #a78bfa55' : undefined,
+          boxShadow: show ? '0 0 0 3px #0f172a55' : undefined,
           transition: 'box-shadow 0.2s',
         }}
       />

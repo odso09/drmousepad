@@ -536,7 +536,8 @@ export default function PersonalizarPage() {
         {/* Barra superior de la vista previa */}
         <div className="rounded-t-xl bg-[#0f172a] px-6 py-3 flex items-center justify-between border border-b-0 border-card mb-0" style={{marginBottom: 0}}>
           <span className="text-lg md:text-xl font-bold text-white tracking-wide">Vista Previa</span>
-          <span className="text-sm text-muted-foreground flex items-center gap-2">Color de fondo:
+          <span className="text-lg text-muted-foreground flex items-center gap-2">
+            <span className="text-muted-foreground text-lg">Color de fondo:</span>
             <ColorPicker color={fabricCanvas?.backgroundColor as string || '#0b0f14'} onChange={color => {
               if (fabricCanvas) {
                 fabricCanvas.backgroundColor = color;
