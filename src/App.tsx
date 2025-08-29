@@ -23,9 +23,7 @@ const App = () => (
         <Header />
         <Routes>
           <Route path="/" element={<Index />} />
-           <Route path="/index2" element={<Index />} />
           <Route path="/personalizar" element={<PersonalizarPage />} />
-
           <Route path="/carrito" element={<CartPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
