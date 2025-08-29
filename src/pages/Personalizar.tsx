@@ -533,8 +533,24 @@ export default function PersonalizarPage() {
           </div>
         </div>
 
-        {/* Canvas con título */}
-        <div className="rounded-xl bg-card border p-5 mb-6">
+        {/* Barra superior de la vista previa */}
+        <div className="rounded-t-xl bg-[#0f172a] px-6 py-3 flex items-center justify-between border border-b-0 border-card mb-0" style={{marginBottom: 0}}>
+          <span className="text-lg md:text-xl font-bold text-white tracking-wide">Vista Previa</span>
+          <span className="text-sm text-muted-foreground flex items-center gap-2">Color de fondo:
+            <span style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              border: '2.5px solid #a78bfa',
+              boxShadow: '0 0 0 2px #7c3aed, 0 2px 8px 0 rgba(0,0,0,0.18)',
+              display: 'inline-block',
+              marginLeft: 8,
+              background: 'radial-gradient(circle at 30% 30%, #a78bfa 60%, #181c2a 100%)',
+            }} />
+          </span>
+        </div>
+        {/* Canvas */}
+        <div className="rounded-b-xl bg-card border-t-0 border p-5 mb-6">
           <div className={`relative rounded-xl bg-black/80 p-2 ${rgb ? 'animate-rgb-glow' : ''}`}> 
             {rgb && <div aria-hidden className="led-gradient-ring pointer-events-none absolute inset-0 rounded-xl" />}
             <div className="relative flex items-center justify-center w-full h-full rounded-lg overflow-hidden">
