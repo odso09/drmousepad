@@ -27,7 +27,7 @@ export function ColorPicker({ color, onChange }: { color: string; onChange: (col
           width: size,
           height: size,
           borderRadius: '50%',
-          border: "2px solid #0f172a", // azul marino
+          border: "2px solid #334155", // azul marino un poco más claro
           background: color,
           cursor: "pointer",
           boxShadow: show ? '0 0 0 3px #0f172a55' : undefined,
