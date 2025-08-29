@@ -1,4 +1,5 @@
 // Declaración para evitar error de TypeScript con EyeDropper
+import SEO from "@/components/SEO";
 declare global {
   interface Window {
     EyeDropper?: any;
@@ -466,7 +467,13 @@ export default function PersonalizarPage() {
   };
 
   return (
-    <section className="container py-8 grid gap-8 lg:grid-cols-[1fr_360px]">
+    <>
+      <SEO
+        title="Personaliza tu Mousepad Gamer | Dr Mousepad"
+        description="Crea tu mousepad único: elige tamaño, color, agrega tu logo y textos. Vista previa en tiempo real y envío gratis en Paraguay."
+        canonical="https://drmousepad.com/personalizar"
+      />
+      <section className="container py-8 grid gap-8 lg:grid-cols-[1fr_360px]">
       <div>
         {/* Título y subtítulo */}
         <div className="mb-8">
@@ -826,5 +833,6 @@ export default function PersonalizarPage() {
         </div>
       </aside>
     </section>
+    </>
   );
 }

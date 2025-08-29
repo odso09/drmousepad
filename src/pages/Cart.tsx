@@ -1,3 +1,4 @@
+import SEO from "@/components/SEO";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,13 @@ export default function CartPage() {
   };
 
   return (
-    <section className="container py-10">
+    <>
+      <SEO
+        title="Carrito de Compras | Dr Mousepad"
+        description="Revisa y finaliza tu compra de mousepads personalizados. Elige método de pago y recibe tu pedido en todo Paraguay."
+        canonical="https://drmousepad.com/carrito"
+      />
+      <section className="container py-10">
       <h1 className="text-3xl font-bold mb-6">Carrito</h1>
       {items.length === 0 ? (
         <p className="text-muted-foreground">Tu carrito está vacío.</p>
@@ -68,5 +75,6 @@ export default function CartPage() {
         </div>
       )}
     </section>
+    </>
   );
 }

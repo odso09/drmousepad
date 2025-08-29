@@ -1,3 +1,5 @@
+
+import SEO from "@/components/SEO";
 import { Hero } from "@/components/sections/Hero";
 
 import { Gallery } from "@/components/sections/Gallery";
@@ -9,7 +11,13 @@ import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
-    <main className="min-h-screen bg-background flex flex-col">
+    <>
+      <SEO
+        title="Mousepads Personalizados Paraguay | Dr Mousepad"
+        description="Diseña tu propio mousepad gamer con luces RGB, calidad premium y envío gratis a todo Paraguay. Personaliza tamaño, color, logo y texto. ¡Haz único tu escritorio!"
+        canonical="https://drmousepad.com/"
+      />
+      <main className="min-h-screen bg-background flex flex-col">
       <Hero />
       <Gallery />
       <Features />
@@ -24,6 +32,7 @@ const Index = () => {
       <Testimonials />
       <Footer />
     </main>
+    </>
   );
 };
 
