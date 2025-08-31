@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import gallery1 from "@/assets/gallery-1.jpg";
@@ -13,6 +14,7 @@ const galleryImages = [
 
 export const Gallery = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [open, setOpen] = useState(false);
 
   const nextImage = () => {
     setCurrentIndex((prev) => (prev + 1) % galleryImages.length);
@@ -40,13 +42,14 @@ export const Gallery = () => {
               className="flex transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
-              {galleryImages.map((image) => (
+              {galleryImages.map((image, idx) => (
                 <div key={image.id} className="w-full flex-shrink-0">
                   <img
                     src={image.src}
                     alt={image.alt}
-                    className="w-full h-[400px] object-cover"
+                    className="w-full h-[400px] object-cover cursor-zoom-in"
                     loading="lazy"
+                    onClick={() => { setCurrentIndex(idx); setOpen(true); }}
                   />
                 </div>
               ))}
@@ -71,21 +74,34 @@ export const Gallery = () => {
             </Button>
           </div>
 
-          <div className="flex justify-center mt-6 gap-2">
-            {galleryImages.map((_, index) => (
-              <button
-                key={index}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === currentIndex 
-                    ? 'bg-primary shadow-[0_0_10px_hsl(var(--primary)/0.8)]' 
-                    : 'bg-muted hover:bg-muted-foreground'
-                }`}
-                onClick={() => setCurrentIndex(index)}
+          {/* Modal para imagen completa */}
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent className="max-w-3xl p-0 bg-transparent border-none shadow-none flex items-center justify-center">
+              <img
+                src={galleryImages[currentIndex].src}
+                alt={galleryImages[currentIndex].alt}
+                className="w-full max-h-[80vh] object-contain rounded-xl shadow-2xl"
+                style={{ background: '#111' }}
               />
-            ))}
-          </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="flex justify-center mt-6 gap-2">
+          {galleryImages.map((_, index) => (
+            <button
+              key={index}
+              className={`w-3 h-3 rounded-full transition-colors ${
+                index === currentIndex 
+                  ? 'bg-primary shadow-[0_0_10px_hsl(var(--primary)/0.8)]' 
+                  : 'bg-muted hover:bg-muted-foreground'
+              }`}
+              onClick={() => setCurrentIndex(index)}
+            />
+          ))}
         </div>
       </div>
+
     </section>
   );
-};
+}
