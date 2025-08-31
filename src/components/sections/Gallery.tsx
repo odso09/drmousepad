@@ -2,14 +2,27 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 import gallery1 from "@/assets/gallery-1.jpg";
 import gallery2 from "@/assets/gallery-2.jpg";
 import gallery3 from "@/assets/gallery-3.jpg";
+import gallery4 from "@/assets/gallery-4.jpg";
+import gallery5 from "@/assets/gallery-5.jpg";
+import gallery6 from "@/assets/gallery-6.jpg";
+import gallery7 from "@/assets/gallery-7.jpg";
+import gallery8 from "@/assets/gallery-8.jpg";
+import gallery9 from "@/assets/gallery-9.jpg";
 
 const galleryImages = [
   { id: 1, src: gallery1, alt: "Mousepad personalizado con diseño cyberpunk" },
   { id: 2, src: gallery2, alt: "Mousepad gaming con diseño anime y RGB" },
   { id: 3, src: gallery3, alt: "Mousepad minimalista con logo personalizado" },
+  { id: 4, src: gallery4, alt: "Mousepad personalizado con diseño geométrico" },
+  { id: 5, src: gallery5, alt: "Mousepad con ilustración artística" },
+  { id: 6, src: gallery6, alt: "Mousepad con diseño de fantasía" },
+  { id: 7, src: gallery7, alt: "Mousepad con arte abstracto" },
+  { id: 8, src: gallery8, alt: "Mousepad con diseño minimalista" },
+  { id: 9, src: gallery9, alt: "Mousepad personalizado edición especial" },
 ];
 
 export const Gallery = () => {
@@ -47,7 +60,7 @@ export const Gallery = () => {
                   <img
                     src={image.src}
                     alt={image.alt}
-                    className="w-full h-[400px] object-cover cursor-zoom-in"
+                    className="w-[900px] h-[520px] object-cover mx-auto cursor-zoom-in"
                     loading="lazy"
                     onClick={() => { setCurrentIndex(idx); setOpen(true); }}
                   />
