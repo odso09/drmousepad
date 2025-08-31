@@ -67,6 +67,10 @@ const parseSize = (s: string) => {
 };
 
 export default function PersonalizarPage() {
+  // URL del logo para filtrar imágenes personalizadas
+  const LOGO_URL = logoUrl;
+  // Clave para localStorage
+  const LOCAL_KEY = 'personalizar_drmousepad';
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("id");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -102,6 +106,72 @@ export default function PersonalizarPage() {
   // Cargar datos si editando
   // Primer efecto: restaurar datos y canvas
   useEffect(() => {
+    // Restaurar desde localStorage si no es edición desde carrito
+    if (!editId && (!items || !items.length)) {
+      const saved = localStorage.getItem(LOCAL_KEY);
+      if (saved && fabricCanvas) {
+        try {
+          const parsed = JSON.parse(saved);
+          setSize(parsed.size || DEFAULT_SIZE);
+          setRgb(!!parsed.rgb);
+          setLogoRemoved(!!parsed.logoRemoved);
+          setLogoPos(parsed.logoPos || 'bottom-right');
+          setTexts(parsed.texts || []);
+          // Solo imágenes personalizadas (excluyendo el logo)
+          const customImages = (parsed.images || []).filter((imgObj: any) => {
+            const url = typeof imgObj === 'string' ? imgObj : imgObj.url;
+            return url !== LOGO_URL;
+          });
+          setUploadedImages(customImages);
+
+          // Restaurar imágenes personalizadas
+          if (customImages && Array.isArray(customImages)) {
+            customImages.forEach((imgObj: any) => {
+              const imgData = typeof imgObj === 'string' ? imgObj : imgObj.url;
+              const imgProps = typeof imgObj === 'string' ? {} : (imgObj.props || {});
+              FabricImage.fromURL(imgData).then((img) => {
+                img.set({
+                  left: imgProps.left ?? (fabricCanvas.width as number) / 2,
+                  top: imgProps.top ?? (fabricCanvas.height as number) / 2,
+                  scaleX: imgProps.scaleX ?? 0.5,
+                  scaleY: imgProps.scaleY ?? 0.5,
+                  originX: imgProps.originX ?? 'center',
+                  originY: imgProps.originY ?? 'center',
+                  selectable: true,
+                  ...imgProps
+                });
+                fabricCanvas.add(img);
+                fabricCanvas.sendObjectToBack(img as any);
+                fabricCanvas.renderAll();
+              });
+            });
+          }
+          // Restaurar textos
+          if (parsed.texts && Array.isArray(parsed.texts)) {
+            parsed.texts.forEach((tb: any) => {
+              const textbox = new Textbox(tb.content, {
+                fontFamily: tb.font,
+                fill: tb.fill,
+                fontSize: tb.fontSize,
+                left: typeof tb.left === 'number' ? tb.left : 40,
+                top: typeof tb.top === 'number' ? tb.top : 40,
+                originX: tb.originX,
+                originY: tb.originY,
+                selectable: true,
+              } as any);
+              if (typeof tb.width === 'number') textbox.set('width', tb.width);
+              if (typeof tb.height === 'number') textbox.set('height', tb.height);
+              if (typeof tb.scaleX === 'number') textbox.set('scaleX', tb.scaleX);
+              if (typeof tb.scaleY === 'number') textbox.set('scaleY', tb.scaleY);
+              if (typeof tb.angle === 'number') textbox.set('angle', tb.angle);
+              fabricCanvas.add(textbox);
+            });
+            fabricCanvas.renderAll();
+          }
+        } catch {}
+      }
+      return;
+    }
     if (!editId || !items.length) return;
     const item = items.find(i => i.id === editId);
     if (!item) return;
@@ -111,8 +181,11 @@ export default function PersonalizarPage() {
     setLogoPos(item.data.logo.position);
     setTexts(item.data.texts);
     if (item.data.images && item.data.images.length > 0) {
-      // Restaurar todas las imágenes
-      item.data.images.forEach((imgObj: any) => {
+      // Restaurar solo imágenes personalizadas (excluyendo el logo)
+      item.data.images.filter((imgObj: any) => {
+        const url = typeof imgObj === 'string' ? imgObj : imgObj.url;
+        return url !== LOGO_URL;
+      }).forEach((imgObj: any) => {
         const imgData = typeof imgObj === 'string' ? imgObj : imgObj.url;
         const imgProps = typeof imgObj === 'string' ? {} : (imgObj.props || {});
         FabricImage.fromURL(imgData).then((img) => {
@@ -131,7 +204,6 @@ export default function PersonalizarPage() {
           fabricCanvas.renderAll();
         });
       });
-      // Para mantener compatibilidad con el estado actual
     }
     if (item.canvasJson && fabricCanvas) {
       fabricCanvas.loadFromJSON(item.canvasJson, () => {
@@ -140,6 +212,18 @@ export default function PersonalizarPage() {
     }
     // NOTA: Si tienes más campos, agrégalos aquí
   }, [editId, items, fabricCanvas]);
+  // Guardar automáticamente en localStorage al cambiar el estado relevante
+  useEffect(() => {
+    const data = {
+      size,
+      rgb,
+      logoRemoved,
+      logoPos,
+      texts,
+      images: uploadedImages,
+    };
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
+  }, [size, rgb, logoRemoved, logoPos, texts, uploadedImages]);
 
   // Segundo efecto: restaurar imagen personalizada si falta en el canvas
   useEffect(() => {
@@ -493,22 +577,24 @@ export default function PersonalizarPage() {
     // Exportar thumbnail comprimido
     const dataUrl = (fabricCanvas as any).toDataURL({ format: 'jpeg', quality: 0.7 });
     const canvasJson = fabricCanvas.toJSON();
-    // Guardar todas las imágenes del canvas
+    // Guardar solo imágenes personalizadas (excluyendo el logo)
     const canvasImages = fabricCanvas.getObjects().filter(o => o.type === 'image');
-    const imagesArr = canvasImages.map((img: any) => ({
-      url: img._element?.src || '',
-      props: {
-        left: img.left,
-        top: img.top,
-        scaleX: img.scaleX,
-        scaleY: img.scaleY,
-        originX: img.originX,
-        originY: img.originY,
-        angle: img.angle,
-        width: img.width,
-        height: img.height,
-      }
-    }));
+    const imagesArr = canvasImages
+      .map((img: any) => ({
+        url: img._element?.src || '',
+        props: {
+          left: img.left,
+          top: img.top,
+          scaleX: img.scaleX,
+          scaleY: img.scaleY,
+          originX: img.originX,
+          originY: img.originY,
+          angle: img.angle,
+          width: img.width,
+          height: img.height,
+        }
+      }))
+      .filter(img => img.url !== LOGO_URL);
     setUploadedImages(imagesArr);
     // Guardar textos con props actuales del canvas
     const canvasTexts = fabricCanvas.getObjects().filter(o => o.type === 'textbox');
