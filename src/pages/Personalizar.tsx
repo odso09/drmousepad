@@ -100,7 +100,6 @@ export default function PersonalizarPage() {
   // Estado para múltiples imágenes subidas
   const [uploadedImages, setUploadedImages] = useState<Array<{ url: string; props?: any }>>([]);
   const [textColor, setTextColor] = useState("#ffffff");
-  // const [textInput, setTextInput] = useState("");
 
   const { addItem, items } = useCart();
   // Cargar datos si editando
