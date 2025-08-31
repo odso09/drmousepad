@@ -7,8 +7,24 @@ export type LogoState = {
 
 export type PersonalizationData = {
   size: string;
-  images: string[]; // file names or data refs (optional)
-  texts: { id: string; content: string; font: string }[];
+  images: { url: string; props?: any }[]; // dataURL y props de la imagen
+  texts: Array<{
+    id: string;
+    content: string;
+    font: string;
+    fill?: string;
+    fontSize?: number;
+    left?: number;
+    top?: number;
+    scaleX?: number;
+    scaleY?: number;
+    angle?: number;
+    width?: number;
+    height?: number;
+    originX?: string;
+    originY?: string;
+    // Puedes agregar más props si lo deseas
+  }>;
   logo: LogoState;
   rgb: boolean;
   basePrice: number;

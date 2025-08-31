@@ -75,31 +75,127 @@ export default function PersonalizarPage() {
   const [rgb, setRgb] = useState(false);
   const [logoRemoved, setLogoRemoved] = useState(false);
   const [logoPos, setLogoPos] = useState<"top-left" | "top-right" | "bottom-left" | "bottom-right">("bottom-right");
-  const [texts, setTexts] = useState<{ id: string; content: string; font: string }[]>([]);
+  const [texts, setTexts] = useState<Array<{
+    id: string;
+    content: string;
+    font: string;
+    fill?: string;
+    fontSize?: number;
+    left?: number;
+    top?: number;
+    scaleX?: number;
+    scaleY?: number;
+    angle?: number;
+    width?: number;
+    height?: number;
+    originX?: string;
+    originY?: string;
+  }>>([]);
   const [activeFont, setActiveFont] = useState(FONTS[0].value);
   const [logoObj, setLogoObj] = useState<FabricObject | null>(null);
+  // Estado para múltiples imágenes subidas
+  const [uploadedImages, setUploadedImages] = useState<Array<{ url: string; props?: any }>>([]);
   const [textColor, setTextColor] = useState("#ffffff");
   // const [textInput, setTextInput] = useState("");
 
   const { addItem, items } = useCart();
   // Cargar datos si editando
+  // Primer efecto: restaurar datos y canvas
   useEffect(() => {
     if (!editId || !items.length) return;
     const item = items.find(i => i.id === editId);
     if (!item) return;
-    // Setear todos los estados principales
     setSize(item.data.size);
     setRgb(item.data.rgb);
     setLogoRemoved(item.data.logo.removed);
     setLogoPos(item.data.logo.position);
     setTexts(item.data.texts);
-    // Restaurar el canvas si hay json guardado
+    if (item.data.images && item.data.images.length > 0) {
+      // Restaurar todas las imágenes
+      item.data.images.forEach((imgObj: any) => {
+        const imgData = typeof imgObj === 'string' ? imgObj : imgObj.url;
+        const imgProps = typeof imgObj === 'string' ? {} : (imgObj.props || {});
+        FabricImage.fromURL(imgData).then((img) => {
+          img.set({
+            left: imgProps.left ?? (fabricCanvas.width as number) / 2,
+            top: imgProps.top ?? (fabricCanvas.height as number) / 2,
+            scaleX: imgProps.scaleX ?? 0.5,
+            scaleY: imgProps.scaleY ?? 0.5,
+            originX: imgProps.originX ?? 'center',
+            originY: imgProps.originY ?? 'center',
+            selectable: true,
+            ...imgProps
+          });
+          fabricCanvas.add(img);
+          fabricCanvas.sendObjectToBack(img as any);
+          fabricCanvas.renderAll();
+        });
+      });
+      // Para mantener compatibilidad con el estado actual
+    }
     if (item.canvasJson && fabricCanvas) {
       fabricCanvas.loadFromJSON(item.canvasJson, () => {
         fabricCanvas.renderAll();
       });
     }
     // NOTA: Si tienes más campos, agrégalos aquí
+  }, [editId, items, fabricCanvas]);
+
+  // Segundo efecto: restaurar imagen personalizada si falta en el canvas
+  useEffect(() => {
+    if (!editId || !items.length || !fabricCanvas) return;
+    const item = items.find(i => i.id === editId);
+    if (!item) return;
+    // Imagen personalizada
+    if (item.data.images && item.data.images.length > 0) {
+      const imgObj = item.data.images[0];
+      const imgData = typeof imgObj === 'string' ? imgObj : imgObj.url;
+      const imgProps = typeof imgObj === 'string' ? {} : (imgObj.props || {});
+      const hasImage = fabricCanvas.getObjects().some(o => o.type === 'image');
+      if (!hasImage && imgData) {
+        FabricImage.fromURL(imgData).then((img) => {
+          img.set({
+            left: imgProps.left ?? (fabricCanvas.width as number) / 2,
+            top: imgProps.top ?? (fabricCanvas.height as number) / 2,
+            scaleX: imgProps.scaleX ?? 0.5,
+            scaleY: imgProps.scaleY ?? 0.5,
+            originX: imgProps.originX ?? 'center',
+            originY: imgProps.originY ?? 'center',
+            selectable: true,
+            ...imgProps
+          });
+          fabricCanvas.add(img);
+          fabricCanvas.sendObjectToBack(img as any);
+          fabricCanvas.renderAll();
+        });
+      }
+    }
+    // Textos personalizados
+    if (item.data.texts && item.data.texts.length > 0) {
+      const hasText = fabricCanvas.getObjects().some(o => o.type === 'textbox');
+      if (!hasText) {
+        item.data.texts.forEach(tb => {
+          const textbox = new Textbox(tb.content, {
+            fontFamily: tb.font,
+            fill: tb.fill,
+            fontSize: tb.fontSize,
+            left: typeof tb.left === 'number' ? tb.left : 40,
+            top: typeof tb.top === 'number' ? tb.top : 40,
+            originX: tb.originX,
+            originY: tb.originY,
+            selectable: true,
+          } as any);
+          // Aplicar tamaño, escala y ángulo después de crear el textbox
+          if (typeof tb.width === 'number') textbox.set('width', tb.width);
+          if (typeof tb.height === 'number') textbox.set('height', tb.height);
+          if (typeof tb.scaleX === 'number') textbox.set('scaleX', tb.scaleX);
+          if (typeof tb.scaleY === 'number') textbox.set('scaleY', tb.scaleY);
+          if (typeof tb.angle === 'number') textbox.set('angle', tb.angle);
+          fabricCanvas.add(textbox);
+        });
+        fabricCanvas.renderAll();
+      }
+    }
   }, [editId, items, fabricCanvas]);
 
   const ratio = useMemo(() => {
@@ -251,39 +347,63 @@ export default function PersonalizarPage() {
       top: 40,
     } as any);
     fabricCanvas.add(tb);
-    setTexts((t) => [...t, { id, content: textInput, font: activeFont }]);
+    // Guardar las props reales del textbox
+    setTexts((t) => [
+      ...t,
+      {
+        id,
+        content: textInput,
+        font: activeFont,
+        fill: typeof tb.fill === 'string' ? tb.fill : '#ffffff',
+        fontSize: tb.fontSize,
+        left: tb.left,
+        top: tb.top,
+        scaleX: tb.scaleX,
+        scaleY: tb.scaleY,
+        angle: tb.angle,
+        width: tb.width,
+        height: tb.height,
+  originX: typeof tb.originX === 'string' ? tb.originX : 'left',
+  originY: typeof tb.originY === 'string' ? tb.originY : 'top',
+      },
+    ]);
     setTextInput("");
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!fabricCanvas) return;
     const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    FabricImage.fromURL(url).then((img) => {
-      const cw = fabricCanvas.width as number;
-      const ch = fabricCanvas.height as number;
-
-      // Escala al 50% del canvas
-      const scale = 0.5 * Math.min(cw / (img.width as number), ch / (img.height as number));
-
-      img.set({
-        left: cw / 2,
-        top: ch / 2,
-        scaleX: scale,
-        scaleY: scale,
-        originX: "center",
-        originY: "center",
-        selectable: true,
-      } as any);
-
-      fabricCanvas.add(img);
-      fabricCanvas.sendObjectToBack(img as any);
-      fabricCanvas.renderAll();
-      toast.success("Imagen agregada al centro.");
-    });
+    if (!fabricCanvas) return;
+    const fileUp = e.target.files?.[0];
+    if (!fileUp) return;
+    // Leer como dataURL
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const dataUrl = ev.target?.result as string;
+      FabricImage.fromURL(dataUrl).then((img) => {
+        const cw = fabricCanvas.width as number;
+        const ch = fabricCanvas.height as number;
+        // Escala al 50% del canvas
+        const scale = 0.5 * Math.min(cw / (img.width as number), ch / (img.height as number));
+        const props = {
+          left: cw / 2,
+          top: ch / 2,
+          scaleX: scale,
+          scaleY: scale,
+          originX: "center",
+          originY: "center",
+          selectable: true,
+        };
+        img.set(props as any);
+        fabricCanvas.add(img);
+        fabricCanvas.sendObjectToBack(img as any);
+        fabricCanvas.renderAll();
+        setUploadedImages(prev => [...prev, { url: dataUrl, props }]);
+        toast.success("Imagen agregada al centro.");
+      });
+    };
+    reader.readAsDataURL(fileUp);
   };
-
 
   useEffect(() => {
     if (!fabricCanvas) return;
@@ -370,15 +490,50 @@ export default function PersonalizarPage() {
 
   const handleAddToCart = async () => {
     if (!fabricCanvas) return;
-    // Export compressed thumbnail
+    // Exportar thumbnail comprimido
     const dataUrl = (fabricCanvas as any).toDataURL({ format: 'jpeg', quality: 0.7 });
     const canvasJson = fabricCanvas.toJSON();
+    // Guardar todas las imágenes del canvas
+    const canvasImages = fabricCanvas.getObjects().filter(o => o.type === 'image');
+    const imagesArr = canvasImages.map((img: any) => ({
+      url: img._element?.src || '',
+      props: {
+        left: img.left,
+        top: img.top,
+        scaleX: img.scaleX,
+        scaleY: img.scaleY,
+        originX: img.originX,
+        originY: img.originY,
+        angle: img.angle,
+        width: img.width,
+        height: img.height,
+      }
+    }));
+    setUploadedImages(imagesArr);
+    // Guardar textos con props actuales del canvas
+    const canvasTexts = fabricCanvas.getObjects().filter(o => o.type === 'textbox');
+    const textsArr = canvasTexts.map((tb: any, idx: number) => ({
+      id: tb.id || `text-${idx}`,
+      content: tb.text,
+      font: tb.fontFamily,
+      fill: typeof tb.fill === 'string' ? tb.fill : '#ffffff',
+      fontSize: tb.fontSize,
+      left: tb.left,
+      top: tb.top,
+      scaleX: tb.scaleX,
+      scaleY: tb.scaleY,
+      angle: tb.angle,
+      width: tb.width,
+      height: tb.height,
+      originX: typeof tb.originX === 'string' ? tb.originX : 'left',
+      originY: typeof tb.originY === 'string' ? tb.originY : 'top',
+    }));
     addItem({
       quantity: 1,
       data: {
         size,
-        images: [],
-        texts,
+        images: imagesArr,
+        texts: textsArr,
         logo: { position: logoPos, removed: logoRemoved },
         rgb,
         basePrice: BASE_PRICE,
