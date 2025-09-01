@@ -103,114 +103,6 @@ export default function PersonalizarPage() {
 
   const { addItem, items } = useCart();
   // Cargar datos si editando
-  // Primer efecto: restaurar datos y canvas
-  useEffect(() => {
-    // Restaurar desde localStorage si no es edición desde carrito
-    if (!editId && (!items || !items.length)) {
-      const saved = localStorage.getItem(LOCAL_KEY);
-      if (saved && fabricCanvas) {
-        try {
-          const parsed = JSON.parse(saved);
-          setSize(parsed.size || DEFAULT_SIZE);
-          setRgb(!!parsed.rgb);
-          setLogoRemoved(!!parsed.logoRemoved);
-          setLogoPos(parsed.logoPos || 'bottom-right');
-          setTexts(parsed.texts || []);
-          // Solo imágenes personalizadas (excluyendo el logo)
-          const customImages = (parsed.images || []).filter((imgObj: any) => {
-            const url = typeof imgObj === 'string' ? imgObj : imgObj.url;
-            return url !== LOGO_URL;
-          });
-          setUploadedImages(customImages);
-
-          // Restaurar imágenes personalizadas
-          if (customImages && Array.isArray(customImages)) {
-            customImages.forEach((imgObj: any) => {
-              const imgData = typeof imgObj === 'string' ? imgObj : imgObj.url;
-              const imgProps = typeof imgObj === 'string' ? {} : (imgObj.props || {});
-              FabricImage.fromURL(imgData).then((img) => {
-                img.set({
-                  left: imgProps.left ?? (fabricCanvas.width as number) / 2,
-                  top: imgProps.top ?? (fabricCanvas.height as number) / 2,
-                  scaleX: imgProps.scaleX ?? 0.5,
-                  scaleY: imgProps.scaleY ?? 0.5,
-                  originX: imgProps.originX ?? 'center',
-                  originY: imgProps.originY ?? 'center',
-                  selectable: true,
-                  ...imgProps
-                });
-                fabricCanvas.add(img);
-                fabricCanvas.sendObjectToBack(img as any);
-                fabricCanvas.renderAll();
-              });
-            });
-          }
-          // Restaurar textos
-          if (parsed.texts && Array.isArray(parsed.texts)) {
-            parsed.texts.forEach((tb: any) => {
-              const textbox = new Textbox(tb.content, {
-                fontFamily: tb.font,
-                fill: tb.fill,
-                fontSize: tb.fontSize,
-                left: typeof tb.left === 'number' ? tb.left : 40,
-                top: typeof tb.top === 'number' ? tb.top : 40,
-                originX: tb.originX,
-                originY: tb.originY,
-                selectable: true,
-              } as any);
-              if (typeof tb.width === 'number') textbox.set('width', tb.width);
-              if (typeof tb.height === 'number') textbox.set('height', tb.height);
-              if (typeof tb.scaleX === 'number') textbox.set('scaleX', tb.scaleX);
-              if (typeof tb.scaleY === 'number') textbox.set('scaleY', tb.scaleY);
-              if (typeof tb.angle === 'number') textbox.set('angle', tb.angle);
-              fabricCanvas.add(textbox);
-            });
-            fabricCanvas.renderAll();
-          }
-        } catch {}
-      }
-      return;
-    }
-    if (!editId || !items.length) return;
-    const item = items.find(i => i.id === editId);
-    if (!item) return;
-    setSize(item.data.size);
-    setRgb(item.data.rgb);
-    setLogoRemoved(item.data.logo.removed);
-    setLogoPos(item.data.logo.position);
-    setTexts(item.data.texts);
-    if (item.data.images && item.data.images.length > 0) {
-      // Restaurar solo imágenes personalizadas (excluyendo el logo)
-      item.data.images.filter((imgObj: any) => {
-        const url = typeof imgObj === 'string' ? imgObj : imgObj.url;
-        return url !== LOGO_URL;
-      }).forEach((imgObj: any) => {
-        const imgData = typeof imgObj === 'string' ? imgObj : imgObj.url;
-        const imgProps = typeof imgObj === 'string' ? {} : (imgObj.props || {});
-        FabricImage.fromURL(imgData).then((img) => {
-          img.set({
-            left: imgProps.left ?? (fabricCanvas.width as number) / 2,
-            top: imgProps.top ?? (fabricCanvas.height as number) / 2,
-            scaleX: imgProps.scaleX ?? 0.5,
-            scaleY: imgProps.scaleY ?? 0.5,
-            originX: imgProps.originX ?? 'center',
-            originY: imgProps.originY ?? 'center',
-            selectable: true,
-            ...imgProps
-          });
-          fabricCanvas.add(img);
-          fabricCanvas.sendObjectToBack(img as any);
-          fabricCanvas.renderAll();
-        });
-      });
-    }
-    if (item.canvasJson && fabricCanvas) {
-      fabricCanvas.loadFromJSON(item.canvasJson, () => {
-        fabricCanvas.renderAll();
-      });
-    }
-    // NOTA: Si tienes más campos, agrégalos aquí
-  }, [editId, items, fabricCanvas]);
   // Guardar automáticamente en localStorage al cambiar el estado relevante
   useEffect(() => {
     const data = {
@@ -229,27 +121,34 @@ export default function PersonalizarPage() {
     if (!editId || !items.length || !fabricCanvas) return;
     const item = items.find(i => i.id === editId);
     if (!item) return;
-    // Imagen personalizada
+    // Restaurar estado de logo y rgb
+    setLogoRemoved(item.data.logo?.removed ?? false);
+    setRgb(item.data.rgb ?? false);
+    // Imágenes personalizadas (todas)
     if (item.data.images && item.data.images.length > 0) {
-      const imgObj = item.data.images[0];
-      const imgData = typeof imgObj === 'string' ? imgObj : imgObj.url;
-      const imgProps = typeof imgObj === 'string' ? {} : (imgObj.props || {});
-      const hasImage = fabricCanvas.getObjects().some(o => o.type === 'image');
-      if (!hasImage && imgData) {
-        FabricImage.fromURL(imgData).then((img) => {
-          img.set({
-            left: imgProps.left ?? (fabricCanvas.width as number) / 2,
-            top: imgProps.top ?? (fabricCanvas.height as number) / 2,
-            scaleX: imgProps.scaleX ?? 0.5,
-            scaleY: imgProps.scaleY ?? 0.5,
-            originX: imgProps.originX ?? 'center',
-            originY: imgProps.originY ?? 'center',
-            selectable: true,
-            ...imgProps
+      const hasImages = fabricCanvas.getObjects().some(o => o.type === 'image');
+      if (!hasImages) {
+        item.data.images.filter((imgObj: any) => {
+          const url = typeof imgObj === 'string' ? imgObj : imgObj.url;
+          return url !== LOGO_URL;
+        }).forEach((imgObj: any) => {
+          const imgData = typeof imgObj === 'string' ? imgObj : imgObj.url;
+          const imgProps = typeof imgObj === 'string' ? {} : (imgObj.props || {});
+          FabricImage.fromURL(imgData).then((img) => {
+            img.set({
+              left: imgProps.left ?? (fabricCanvas.width as number) / 2,
+              top: imgProps.top ?? (fabricCanvas.height as number) / 2,
+              scaleX: imgProps.scaleX ?? 0.5,
+              scaleY: imgProps.scaleY ?? 0.5,
+              originX: imgProps.originX ?? 'center',
+              originY: imgProps.originY ?? 'center',
+              selectable: true,
+              ...imgProps
+            });
+            fabricCanvas.add(img);
+            fabricCanvas.sendObjectToBack(img as any);
+            fabricCanvas.renderAll();
           });
-          fabricCanvas.add(img);
-          fabricCanvas.sendObjectToBack(img as any);
-          fabricCanvas.renderAll();
         });
       }
     }
