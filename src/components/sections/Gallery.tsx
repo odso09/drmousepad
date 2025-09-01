@@ -50,6 +50,28 @@ export const Gallery = () => {
     setCurrentIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
   };
 
+  // Navegación con teclado en el modal (debe ir después de declarar open y currentIndex y funciones)
+  React.useEffect(() => {
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') nextImage();
+      if (e.key === 'ArrowLeft') prevImage();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [open, currentIndex]);
+
+  // Navegación con teclado en el modal
+  React.useEffect(() => {
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') nextImage();
+      if (e.key === 'ArrowLeft') prevImage();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [open, currentIndex]);
+
   return (
     <section className="py-20 bg-card">
       <div className="container mx-auto px-6">
@@ -100,15 +122,38 @@ export const Gallery = () => {
             </Button>
           </div>
 
-          {/* Modal para imagen completa */}
+          {/* Modal fullscreen para imagen completa */}
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-3xl p-0 bg-transparent border-none shadow-none flex items-center justify-center">
-              <img
-                src={galleryImages[currentIndex].src}
-                alt={galleryImages[currentIndex].alt}
-                className="w-full max-h-[80vh] object-contain rounded-xl shadow-2xl"
-                style={{ background: '#111' }}
-              />
+            <DialogContent className="fixed inset-0 z-[1000] flex items-center justify-center p-0 m-0 bg-black/90 border-none shadow-none rounded-none">
+              {/* Accesibilidad: Título y descripción para screen readers */}
+              <h2 className="sr-only" id="gallery-modal-title">Vista previa de imagen de galería</h2>
+              <p className="sr-only" id="gallery-modal-desc">Modal de galería, usa las flechas para navegar entre imágenes.</p>
+              <button
+                onClick={prevImage}
+                className="absolute left-6 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 z-50 focus:outline-none"
+                aria-label="Anterior"
+                style={{ fontSize: 0 }}
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+              <div style={{width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <img
+                  src={galleryImages[currentIndex].src}
+                  alt={galleryImages[currentIndex].alt}
+                  className="object-contain rounded-xl shadow-2xl bg-[#111]"
+                  style={{ maxWidth: '90vw', maxHeight: '90vh', margin: 'auto', display: 'block', boxSizing: 'border-box' }}
+                  aria-labelledby="gallery-modal-title"
+                  aria-describedby="gallery-modal-desc"
+                />
+              </div>
+              <button
+                onClick={nextImage}
+                className="absolute right-6 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 z-50 focus:outline-none"
+                aria-label="Siguiente"
+                style={{ fontSize: 0 }}
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
             </DialogContent>
           </Dialog>
         </div>
