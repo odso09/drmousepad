@@ -31,6 +31,7 @@ export type PersonalizationData = {
   extras: { logoRemoved: boolean; rgb: boolean };
   total: number;
   thumbnail?: string; // dataURL
+  backgroundColor?: string;
 };
 
 export type CartItem = {

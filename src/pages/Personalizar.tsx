@@ -100,6 +100,7 @@ export default function PersonalizarPage() {
   // Estado para múltiples imágenes subidas
   const [uploadedImages, setUploadedImages] = useState<Array<{ url: string; props?: any }>>([]);
   const [textColor, setTextColor] = useState("#ffffff");
+  const [backgroundColor, setBackgroundColor] = useState("#0b0f14");
 
   const { addItem, items } = useCart();
   // Cargar datos si editando
@@ -112,18 +113,26 @@ export default function PersonalizarPage() {
       logoPos,
       texts,
       images: uploadedImages,
+      backgroundColor,
     };
     localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
-  }, [size, rgb, logoRemoved, logoPos, texts, uploadedImages]);
+  }, [size, rgb, logoRemoved, logoPos, texts, uploadedImages, backgroundColor]);
 
   // Segundo efecto: restaurar imagen personalizada si falta en el canvas
   useEffect(() => {
     if (!editId || !items.length || !fabricCanvas) return;
     const item = items.find(i => i.id === editId);
     if (!item) return;
-    // Restaurar estado de logo y rgb
+    // Restaurar estado de logo, rgb y backgroundColor
     setLogoRemoved(item.data.logo?.removed ?? false);
     setRgb(item.data.rgb ?? false);
+    if (item.data?.backgroundColor) {
+      setBackgroundColor(item.data.backgroundColor);
+      if (fabricCanvas) {
+        fabricCanvas.backgroundColor = item.data.backgroundColor;
+        fabricCanvas.renderAll();
+      }
+    }
     // Imágenes personalizadas (todas)
     if (item.data.images && item.data.images.length > 0) {
       const hasImages = fabricCanvas.getObjects().some(o => o.type === 'image');
@@ -190,7 +199,7 @@ export default function PersonalizarPage() {
     const fc = new FabricCanvas(canvasRef.current, {
       width: 960,
       height: 960 / (ratio || 2.25),
-      backgroundColor: "#0b0f14",
+      backgroundColor: backgroundColor,
       selection: true,
     });
     fc.preserveObjectStacking = true;
