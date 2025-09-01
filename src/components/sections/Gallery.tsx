@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,9 @@ import gallery5 from "@/assets/gallery-5.jpg";
 import gallery6 from "@/assets/gallery-6.jpg";
 import gallery7 from "@/assets/gallery-7.jpg";
 import gallery8 from "@/assets/gallery-8.jpg";
+
 import gallery9 from "@/assets/gallery-9.jpg";
+import gallery10 from "@/assets/gallery-10.jpg";
 
 const galleryImages = [
   { id: 1, src: gallery1, alt: "Mousepad personalizado con diseño cyberpunk" },
@@ -23,11 +25,22 @@ const galleryImages = [
   { id: 7, src: gallery7, alt: "Mousepad con arte abstracto" },
   { id: 8, src: gallery8, alt: "Mousepad con diseño minimalista" },
   { id: 9, src: gallery9, alt: "Mousepad personalizado edición especial" },
+  { id: 10, src: gallery10, alt: "Mousepad edición limitada 10" },
 ];
 
 export const Gallery = () => {
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [open, setOpen] = useState(false);
+
+  // Autoplay: cambia la imagen cada 5 segundos
+  React.useEffect(() => {
+    if (open) return; // Pausa autoplay si el modal está abierto
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % galleryImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [open]);
 
   const nextImage = () => {
     setCurrentIndex((prev) => (prev + 1) % galleryImages.length);
