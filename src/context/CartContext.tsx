@@ -1,5 +1,23 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+// Utilidad para limpiar claves si localStorage supera 4MB
+function clearLargeLocalStorageKeys(limitMB = 4) {
+  let total = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    const value = localStorage.getItem(key);
+    total += new Blob([key + value]).size;
+  }
+  if (total / (1024 * 1024) > limitMB) {
+    // Elimina claves grandes o no esenciales
+    localStorage.removeItem('personalizar_drmousepad');
+    localStorage.removeItem('dr-mousepad-cart');
+    // Puedes agregar más claves si es necesario
+    // Opcional: muestra advertencia
+    alert('Se ha limpiado el almacenamiento local para evitar errores por espacio lleno.');
+  }
+}
+
 export type LogoState = {
   position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
   removed: boolean;
@@ -71,6 +89,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     localStorage.setItem(LS_KEY, JSON.stringify(items));
+    clearLargeLocalStorageKeys();
   }, [items]);
 
   const addItem: CartContextValue["addItem"] = (item) => {

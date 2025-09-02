@@ -105,6 +105,21 @@ export default function PersonalizarPage() {
   const { addItem, items } = useCart();
   // Cargar datos si editando
   // Guardar automáticamente en localStorage al cambiar el estado relevante
+  // Utilidad para limpiar claves si localStorage supera 4MB
+  function clearLargeLocalStorageKeys(limitMB = 4) {
+    let total = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      const value = localStorage.getItem(key);
+      total += new Blob([key + value]).size;
+    }
+    if (total / (1024 * 1024) > limitMB) {
+      localStorage.removeItem('personalizar_drmousepad');
+      localStorage.removeItem('dr-mousepad-cart');
+      alert('Se ha limpiado el almacenamiento local para evitar errores por espacio lleno.');
+    }
+  }
+
   useEffect(() => {
     const data = {
       size,
@@ -116,6 +131,7 @@ export default function PersonalizarPage() {
       backgroundColor,
     };
     localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
+    clearLargeLocalStorageKeys();
   }, [size, rgb, logoRemoved, logoPos, texts, uploadedImages, backgroundColor]);
 
   // Segundo efecto: restaurar imagen personalizada si falta en el canvas
