@@ -1,6 +1,8 @@
 import SEO from "@/components/SEO";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
+import Checkout from "./Checkout";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -65,9 +67,20 @@ export default function CartPage() {
               <span className="text-2xl font-bold">{total.toLocaleString()} Gs</span>
             </div>
             <div className="mt-4 grid gap-2">
-              <Button onClick={() => handlePay('Bancard')}>Pagar con Bancard</Button>
-              <Button variant="secondary" onClick={() => handlePay('Tigo Money')}>Pagar con Tigo Money</Button>
-              <Button variant="secondary" onClick={() => handlePay('Mercado Pago PY')}>Pagar con Mercado Pago</Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    className="btn-hero text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
+                    aria-label="Finalizar compra"
+                  >
+                    <span className="material-icons" style={{ fontSize: '1.2em' }}></span>
+                    Finalizar compra
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <Checkout />
+                </DialogContent>
+              </Dialog>
               <Button variant="ghost" onClick={() => clear()}>Vaciar carrito</Button>
             </div>
             <p className="mt-3 text-xs text-muted-foreground">Recibirás un email de confirmación con instrucciones de contacto.</p>
