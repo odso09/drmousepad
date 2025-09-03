@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { deleteImageBlob } from "@/lib/idb";
 
 // Utilidad para limpiar claves si localStorage supera 4MB
 function clearLargeLocalStorageKeys(limitMB = 4) {
@@ -103,7 +104,23 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const updateQuantity = (id: string, quantity: number) =>
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity } : i)));
 
-  const clear = () => setItems([]);
+  const clear = () => {
+    // Capturar ids de imágenes antes de limpiar el estado
+    const ids = Array.from(new Set(
+      items
+        .flatMap(i => i.data?.images || [])
+        .map((img: any) => img?.id)
+        .filter(Boolean)
+    )) as string[];
+    // Limpiar UI inmediatamente
+    setItems([]);
+    // Borrar blobs de IndexedDB en segundo plano
+    if (ids.length) {
+      (async () => {
+        await Promise.allSettled(ids.map(id => deleteImageBlob(id)));
+      })();
+    }
+  };
 
   const { count, total } = useMemo(() => {
     const count = items.reduce((sum, i) => sum + i.quantity, 0);
