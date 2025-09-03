@@ -80,6 +80,8 @@ export default function PersonalizarPage() {
   const [rgb, setRgb] = useState(false);
   const [logoRemoved, setLogoRemoved] = useState(false);
   const [logoPos, setLogoPos] = useState<"top-left" | "top-right" | "bottom-left" | "bottom-right">("bottom-right");
+  const logoPosRef = useRef<typeof logoPos>("bottom-right");
+  useEffect(() => { logoPosRef.current = logoPos; }, [logoPos]);
   const [texts, setTexts] = useState<Array<{
     id: string;
     content: string;
@@ -147,6 +149,13 @@ export default function PersonalizarPage() {
     // Restaurar estado de logo, rgb y backgroundColor
     setLogoRemoved(item.data.logo?.removed ?? false);
     setRgb(item.data.rgb ?? false);
+    if (item.data.logo?.position) {
+      setLogoPos(item.data.logo.position);
+      // Si el logo ya está cargado, re-posicionar de inmediato
+      if (logoObj && fabricCanvas) {
+        positionLogo(fabricCanvas, logoObj, item.data.logo.position as any);
+      }
+    }
     if (item.data?.backgroundColor) {
       setBackgroundColor(item.data.backgroundColor);
       if (fabricCanvas) {
@@ -268,9 +277,9 @@ export default function PersonalizarPage() {
         });
         fc.add(img);
         setLogoObj(img);
-        // Esperar a que la imagen esté lista para posicionar
+        // Esperar a que la imagen esté lista para posicionar usando la posición más reciente
         setTimeout(() => {
-          positionLogo(fc, img, logoPos);
+          positionLogo(fc, img, logoPosRef.current);
           fc.renderAll();
         }, 100);
       })
