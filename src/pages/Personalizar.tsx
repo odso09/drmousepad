@@ -103,6 +103,8 @@ export default function PersonalizarPage() {
   const [uploadedImages, setUploadedImages] = useState<Array<{ id?: string; url?: string; props?: any }>>([]);
   const [textColor, setTextColor] = useState("#ffffff");
   const [backgroundColor, setBackgroundColor] = useState("#0b0f14");
+  // Evita re-restaurar (p. ej., tras agregar al carrito que dispara cambios en items)
+  const restoredOnceRef = useRef(false);
 
   const { addItem, items } = useCart();
   // Cargar datos si editando
@@ -137,9 +139,9 @@ export default function PersonalizarPage() {
     clearLargeLocalStorageKeys();
   }, [size, rgb, logoRemoved, logoPos, texts, uploadedImages, backgroundColor]);
 
-  // Segundo efecto: restaurar imagen personalizada si falta en el canvas
+  // Segundo efecto: restaurar desde carrito solo una vez por editId
   useEffect(() => {
-    if (!editId || !items.length || !fabricCanvas) return;
+    if (!editId || !items.length || !fabricCanvas || restoredOnceRef.current) return;
     const item = items.find(i => i.id === editId);
     if (!item) return;
     // Restaurar estado de logo, rgb y backgroundColor
@@ -223,7 +225,14 @@ export default function PersonalizarPage() {
         fabricCanvas.renderAll();
       }
     }
+    // Marcar como restaurado para no sobreescribir cambios del usuario posteriormente
+    restoredOnceRef.current = true;
   }, [editId, items, fabricCanvas]);
+
+  // Si cambia el id de edición, permitir una nueva restauración
+  useEffect(() => {
+    restoredOnceRef.current = false;
+  }, [editId]);
 
   const ratio = useMemo(() => {
     const { w, h } = parseSize(size);
@@ -572,6 +581,7 @@ export default function PersonalizarPage() {
         texts: textsArr,
         logo: { position: logoPos, removed: logoRemoved },
         rgb,
+  backgroundColor,
         basePrice: BASE_PRICE,
         extras: { logoRemoved, rgb },
         total,
@@ -751,7 +761,8 @@ export default function PersonalizarPage() {
           <span className="text-lg md:text-xl font-bold text-white tracking-wide">Vista Previa</span>
           <span className="text-lg text-muted-foreground flex items-center gap-2">
             <span className="text-muted-foreground text-lg">Color de fondo:</span>
-            <ColorPicker color={fabricCanvas?.backgroundColor as string || '#0b0f14'} onChange={color => {
+            <ColorPicker color={backgroundColor} onChange={color => {
+              setBackgroundColor(color);
               if (fabricCanvas) {
                 fabricCanvas.backgroundColor = color;
                 fabricCanvas.renderAll();
@@ -766,6 +777,7 @@ export default function PersonalizarPage() {
                   try {
                     const eyeDropper = new (window as any).EyeDropper();
                     const result = await eyeDropper.open();
+                    setBackgroundColor(result.sRGBHex);
                     if (fabricCanvas) {
                       fabricCanvas.backgroundColor = result.sRGBHex;
                       fabricCanvas.renderAll();
