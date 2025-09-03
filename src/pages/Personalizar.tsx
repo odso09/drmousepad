@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
+import { deleteImageBlob, getImageBlob, saveImageBlob } from "@/lib/idb";
 
 const SIZES = ["90×40 cm", "80×40 cm", "80×30 cm", "70×30 cm", "60×30 cm"] as const;
 const DEFAULT_SIZE = "90×40 cm" as const;
@@ -98,7 +99,8 @@ export default function PersonalizarPage() {
   const [activeFont, setActiveFont] = useState(FONTS[0].value);
   const [logoObj, setLogoObj] = useState<FabricObject | null>(null);
   // Estado para múltiples imágenes subidas
-  const [uploadedImages, setUploadedImages] = useState<Array<{ url: string; props?: any }>>([]);
+  // For each image we now store an id (IndexedDB key) and optional props; keep url for backward compatibility when restoring
+  const [uploadedImages, setUploadedImages] = useState<Array<{ id?: string; url?: string; props?: any }>>([]);
   const [textColor, setTextColor] = useState("#ffffff");
   const [backgroundColor, setBackgroundColor] = useState("#0b0f14");
 
@@ -127,7 +129,8 @@ export default function PersonalizarPage() {
       logoRemoved,
       logoPos,
       texts,
-      images: uploadedImages,
+      // Persist only lightweight references (id + props). If legacy url exists, keep it to render older entries.
+      images: uploadedImages.map(img => ({ id: img.id, url: img.url, props: img.props })),
       backgroundColor,
     };
     localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
@@ -153,28 +156,45 @@ export default function PersonalizarPage() {
     if (item.data.images && item.data.images.length > 0) {
       const hasImages = fabricCanvas.getObjects().some(o => o.type === 'image');
       if (!hasImages) {
-        item.data.images.filter((imgObj: any) => {
-          const url = typeof imgObj === 'string' ? imgObj : imgObj.url;
-          return url !== LOGO_URL;
-        }).forEach((imgObj: any) => {
-          const imgData = typeof imgObj === 'string' ? imgObj : imgObj.url;
-          const imgProps = typeof imgObj === 'string' ? {} : (imgObj.props || {});
-          FabricImage.fromURL(imgData).then((img) => {
-            img.set({
-              left: imgProps.left ?? (fabricCanvas.width as number) / 2,
-              top: imgProps.top ?? (fabricCanvas.height as number) / 2,
-              scaleX: imgProps.scaleX ?? 0.5,
-              scaleY: imgProps.scaleY ?? 0.5,
-              originX: imgProps.originX ?? 'center',
-              originY: imgProps.originY ?? 'center',
-              selectable: true,
-              ...imgProps
-            });
-            fabricCanvas.add(img);
-            fabricCanvas.sendObjectToBack(img as any);
-            fabricCanvas.renderAll();
-          });
-        });
+        // Load each image either from IndexedDB (by id) or fallback to URL (legacy)
+        (async () => {
+          for (const raw of item.data.images) {
+            const ref: any = raw;
+            const urlVal = typeof ref === 'string' ? ref : ref.url;
+            const idVal = typeof ref === 'string' ? undefined : ref.id;
+            const isLogo = urlVal === LOGO_URL;
+            if (isLogo) continue;
+            const imgProps = typeof ref === 'string' ? {} : (ref.props || {});
+            try {
+              let src: string | undefined;
+              if (idVal) {
+                const blob = await getImageBlob(idVal);
+                if (blob) src = URL.createObjectURL(blob);
+              }
+              if (!src && urlVal) src = urlVal; // legacy fallback
+              if (!src) continue;
+              // eslint-disable-next-line no-await-in-loop
+              const img = await FabricImage.fromURL(src);
+              // Etiquetar la instancia con el id de IndexedDB para limpieza/guardado confiable
+              if (idVal) (img as any).__idbId = idVal;
+              img.set({
+                left: imgProps.left ?? (fabricCanvas.width as number) / 2,
+                top: imgProps.top ?? (fabricCanvas.height as number) / 2,
+                scaleX: imgProps.scaleX ?? 0.5,
+                scaleY: imgProps.scaleY ?? 0.5,
+                originX: imgProps.originX ?? 'center',
+                originY: imgProps.originY ?? 'center',
+                selectable: true,
+                ...imgProps
+              } as any);
+              fabricCanvas.add(img);
+              fabricCanvas.sendObjectToBack(img as any);
+              fabricCanvas.renderAll();
+            } catch (e) {
+              console.error('Error restaurando imagen desde IndexedDB/URL', e);
+            }
+          }
+        })();
       }
     }
     // Textos personalizados
@@ -379,37 +399,38 @@ export default function PersonalizarPage() {
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!fabricCanvas) return;
-    const file = e.target.files?.[0];
-    if (!fabricCanvas) return;
     const fileUp = e.target.files?.[0];
     if (!fileUp) return;
-    // Leer como dataURL
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-      const dataUrl = ev.target?.result as string;
-      FabricImage.fromURL(dataUrl).then((img) => {
-        const cw = fabricCanvas.width as number;
-        const ch = fabricCanvas.height as number;
-        // Escala al 50% del canvas
-        const scale = 0.5 * Math.min(cw / (img.width as number), ch / (img.height as number));
-        const props = {
-          left: cw / 2,
-          top: ch / 2,
-          scaleX: scale,
-          scaleY: scale,
-          originX: "center",
-          originY: "center",
-          selectable: true,
-        };
-        img.set(props as any);
-        fabricCanvas.add(img);
-        fabricCanvas.sendObjectToBack(img as any);
-        fabricCanvas.renderAll();
-        setUploadedImages(prev => [...prev, { url: dataUrl, props }]);
-        toast.success("Imagen agregada al centro.");
-      });
-    };
-    reader.readAsDataURL(fileUp);
+    try {
+      // Guardar el archivo original en IndexedDB como blob
+      const id = await saveImageBlob(fileUp);
+      const objUrl = URL.createObjectURL(fileUp);
+  const img = await FabricImage.fromURL(objUrl);
+  // Etiquetar la instancia con el id de IndexedDB
+  (img as any).__idbId = id;
+      const cw = fabricCanvas.width as number;
+      const ch = fabricCanvas.height as number;
+      const scale = 0.5 * Math.min(cw / (img.width as number), ch / (img.height as number));
+      const props = {
+        left: cw / 2,
+        top: ch / 2,
+        scaleX: scale,
+        scaleY: scale,
+        originX: "center",
+        originY: "center",
+        selectable: true,
+      };
+      img.set(props as any);
+      fabricCanvas.add(img);
+      fabricCanvas.sendObjectToBack(img as any);
+      fabricCanvas.renderAll();
+      // Persist only the id + props; keep url undefined to avoid localStorage bloat
+      setUploadedImages(prev => [...prev, { id, props }]);
+      toast.success("Imagen agregada al centro.");
+    } catch (err) {
+      console.error('Fallo al subir/guardar imagen en IndexedDB', err);
+      toast.error('No se pudo cargar la imagen');
+    }
   };
 
   useEffect(() => {
@@ -501,23 +522,29 @@ export default function PersonalizarPage() {
     const dataUrl = (fabricCanvas as any).toDataURL({ format: 'jpeg', quality: 0.7 });
     const canvasJson = fabricCanvas.toJSON();
     // Guardar solo imágenes personalizadas (excluyendo el logo)
-    const canvasImages = fabricCanvas.getObjects().filter(o => o.type === 'image');
-    const imagesArr = canvasImages
-      .map((img: any) => ({
-        url: img._element?.src || '',
-        props: {
-          left: img.left,
-          top: img.top,
-          scaleX: img.scaleX,
-          scaleY: img.scaleY,
-          originX: img.originX,
-          originY: img.originY,
-          angle: img.angle,
-          width: img.width,
-          height: img.height,
-        }
-      }))
-      .filter(img => img.url !== LOGO_URL);
+    const canvasImages = fabricCanvas.getObjects().filter(o => o.type === 'image') as any[];
+    // For each canvas image: if it originated from our IDB (we don't embed url), we keep its id; otherwise, fallback to url
+    const imagesArr = await Promise.all(canvasImages.map(async (img) => {
+      // Usar el id guardado en la instancia si existe; si no, fallback a URL (legacy)
+      const instanceId: string | undefined = (img as any).__idbId;
+      const src: string = img._element?.src || '';
+      const isLogo = src === LOGO_URL;
+      if (isLogo) return null;
+      const props = {
+        left: img.left,
+        top: img.top,
+        scaleX: img.scaleX,
+        scaleY: img.scaleY,
+        originX: img.originX,
+        originY: img.originY,
+        angle: img.angle,
+        width: img.width,
+        height: img.height,
+      };
+  if (instanceId) return { id: instanceId, props };
+  // Fallback: store url (legacy)
+  return { url: src, props };
+    })).then(arr => arr.filter(Boolean) as any);
     setUploadedImages(imagesArr);
     // Guardar textos con props actuales del canvas
     const canvasTexts = fabricCanvas.getObjects().filter(o => o.type === 'textbox');
@@ -541,7 +568,7 @@ export default function PersonalizarPage() {
       quantity: 1,
       data: {
         size,
-        images: imagesArr,
+  images: imagesArr,
         texts: textsArr,
         logo: { position: logoPos, removed: logoRemoved },
         rgb,
@@ -622,8 +649,16 @@ export default function PersonalizarPage() {
   }, [fabricCanvas, logoObj]);
 
   // Delete handler
-  const handleDeleteObject = (obj: any) => {
+  const handleDeleteObject = async (obj: any) => {
     if (!fabricCanvas) return;
+    try {
+      if (obj?.type === 'image' && (obj as any).__idbId) {
+        await deleteImageBlob((obj as any).__idbId);
+      }
+    } catch (e) {
+      // Silencioso: si falla la limpieza no bloquea la UI
+      console.warn('No se pudo borrar blob de IndexedDB', e);
+    }
     fabricCanvas.remove(obj);
     fabricCanvas.discardActiveObject();
     fabricCanvas.renderAll();

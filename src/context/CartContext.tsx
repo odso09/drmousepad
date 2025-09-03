@@ -25,7 +25,8 @@ export type LogoState = {
 
 export type PersonalizationData = {
   size: string;
-  images: { url: string; props?: any }[]; // dataURL y props de la imagen
+  // Now supports IndexedDB id reference or legacy url
+  images: { id?: string; url?: string; props?: any }[]; // referencia + props
   texts: Array<{
     id: string;
     content: string;
