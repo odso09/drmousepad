@@ -89,51 +89,65 @@ const Checkout = () => {
 								Datos para tu pedido
 						</h1>
 			 <form onSubmit={handleSubmit} className="space-y-4">
+				<label htmlFor="nombre" className="sr-only">Nombre completo</label>
 				<input
 					type="text"
 					name="nombre"
+					id="nombre"
 					placeholder="Nombre completo"
 					value={form.nombre}
 					onChange={handleChange}
 					required
+					autoComplete="name"
 					className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-zinc-900"
 				/>
+				<label htmlFor="email" className="sr-only">Correo electrónico</label>
 				<input
 					type="email"
 					name="email"
+					id="email"
 					placeholder="Correo electrónico"
 					value={form.email}
 					onChange={handleChange}
 					required
+					autoComplete="email"
 					className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-zinc-900"
 				/>
+				<label htmlFor="telefono" className="sr-only">Teléfono</label>
 				<input
 					type="tel"
 					name="telefono"
+					id="telefono"
 					placeholder="Teléfono"
 					value={form.telefono}
 					onChange={handleChange}
 					required
+					autoComplete="tel"
 					className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-zinc-900"
 				/>
+				<label htmlFor="direccion" className="sr-only">Dirección de entrega</label>
 				<input
 					type="text"
 					name="direccion"
+					id="direccion"
 					placeholder="Dirección de entrega"
 					value={form.direccion}
 					onChange={handleChange}
 					required
+					autoComplete="street-address"
 					className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-zinc-900"
 				/>
+				<label htmlFor="observacion" className="sr-only">Observaciones</label>
 				<textarea
 					name="observacion"
+					id="observacion"
 					placeholder="Observaciones (opcional)"
 					value={form.observacion}
 					onChange={handleChange}
 					className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-zinc-900"
 				/>
-				 <div className="my-4">
-					 <label className="block mb-2 font-medium">Coloca tu ubicación en el mapa (opcional)</label>
+				 <div className="my-4" role="group" aria-labelledby="map-label">
+					 <label id="map-label" className="block mb-2 font-medium">Coloca tu ubicación en el mapa (opcional)</label>
 							 <MapContainer center={[-25.2637, -57.5759]} zoom={13} style={{ height: 220, width: '100%', borderRadius: 12 } as React.CSSProperties}>
 								 <TileLayer
 									 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -148,13 +162,12 @@ const Checkout = () => {
 						  <button
 					 type="submit"
 					 disabled={enviando}
-							  className="btn-hero-static text-sm px-3 py-2 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
-					 aria-label="Continuar"
+						  className="btn-hero-static text-sm px-3 py-2 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
 				 >
-					 <span className="material-icons" style={{ fontSize: '1.1em' }}></span>
+					 <span className="material-icons" style={{ fontSize: '1.1em' }} aria-hidden="true"></span>
 					 {enviando ? "Enviando..." : "Continuar"}
 				 </button>
-				{mensaje && <div className="text-green-600 font-semibold mt-2">{mensaje}</div>}
+					{mensaje && <div className="text-green-600 font-semibold mt-2" role="status" aria-live="polite">{mensaje}</div>}
 			</form>
 		</div>
 	);
