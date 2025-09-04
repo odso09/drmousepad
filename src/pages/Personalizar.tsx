@@ -120,9 +120,8 @@ export default function PersonalizarPage() {
       total += new Blob([key + value]).size;
     }
     if (total / (1024 * 1024) > limitMB) {
-      localStorage.removeItem('personalizar_drmousepad');
-      localStorage.removeItem('dr-mousepad-cart');
-      alert('Se ha limpiado el almacenamiento local para evitar errores por espacio lleno.');
+      // Notificar sin bloquear ni borrar automáticamente
+      toast.warning('Espacio local casi lleno. Considera limpiar la caché desde el carrito.');
     }
   }
 
@@ -250,6 +249,13 @@ export default function PersonalizarPage() {
   useEffect(() => {
     restoredOnceRef.current = false;
   }, [editId]);
+
+  // También resetear al desmontar
+  useEffect(() => {
+    return () => {
+      restoredOnceRef.current = false;
+    };
+  }, []);
 
   const ratio = useMemo(() => {
     const { w, h } = parseSize(size);
@@ -550,7 +556,7 @@ export default function PersonalizarPage() {
     // Guardar solo imágenes personalizadas (excluyendo el logo)
     const canvasImages = fabricCanvas.getObjects().filter(o => o.type === 'image') as any[];
     // For each canvas image: if it originated from our IDB (we don't embed url), we keep its id; otherwise, fallback to url
-    const imagesArr = await Promise.all(canvasImages.map(async (img) => {
+  const imagesArr = await Promise.all(canvasImages.map(async (img) => {
       // Usar el id guardado en la instancia si existe; si no, fallback a URL (legacy)
       const instanceId: string | undefined = (img as any).__idbId;
       const src: string = img._element?.src || '';
@@ -567,9 +573,20 @@ export default function PersonalizarPage() {
         width: img.width,
         height: img.height,
       };
-  if (instanceId) return { id: instanceId, props };
-  // Fallback: store url (legacy)
-  return { url: src, props };
+      if (instanceId) return { id: instanceId, props };
+      // Si la imagen proviene de un blob: persistir en IndexedDB para que sobreviva reload
+      if (src && src.startsWith('blob:')) {
+        try {
+          const resp = await fetch(src);
+          const blob = await resp.blob();
+          const newId = await saveImageBlob(blob);
+          return { id: newId, props };
+        } catch {
+          // Si falla, continuar al fallback
+        }
+      }
+      // Fallback: guardar url (legacy)
+      return { url: src, props };
     })).then(arr => arr.filter(Boolean) as any);
     setUploadedImages(imagesArr);
     // Guardar textos con props actuales del canvas
@@ -631,10 +648,10 @@ export default function PersonalizarPage() {
   // Update overlay positions on canvas/object changes
   useEffect(() => {
     if (!fabricCanvas) return;
-    const updateOverlays = () => {
+    let rafId: number | null = null;
+    const computeOverlays = () => {
       const objs = getDeletableObjects();
       const overlays = objs.map(obj => {
-        // Get bounding rect relative to canvas
         const bound = obj.getBoundingRect();
         return {
           id: obj.toString(),
@@ -647,14 +664,18 @@ export default function PersonalizarPage() {
       });
       setObjectOverlays(overlays);
     };
-    updateOverlays();
-    // Listen to object events
+    const scheduleUpdate = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        computeOverlays();
+      });
+    };
+    scheduleUpdate();
     const events = ['object:moving', 'object:scaling', 'object:rotating', 'object:added', 'object:removed', 'object:modified'];
-    events.forEach(evt => fabricCanvas.on(evt as any, updateOverlays));
-    // Also update on renderAll
-    fabricCanvas.on('after:render' as any, updateOverlays);
+    events.forEach(evt => fabricCanvas.on(evt as any, scheduleUpdate));
+    fabricCanvas.on('after:render' as any, scheduleUpdate);
 
-    // Listen for selection changes
     const handleSelection = () => {
       const active = fabricCanvas.getActiveObject();
       setSelectedObj(active && (active.type === 'image' || active.type === 'textbox') ? active : null);
@@ -663,15 +684,15 @@ export default function PersonalizarPage() {
     fabricCanvas.on('selection:updated' as any, handleSelection);
     fabricCanvas.on('selection:cleared' as any, () => setSelectedObj(null));
 
-    // Initial
-    updateOverlays();
+    scheduleUpdate();
     handleSelection();
     return () => {
-      events.forEach(evt => fabricCanvas.off(evt as any, updateOverlays));
-      fabricCanvas.off('after:render' as any, updateOverlays);
+      events.forEach(evt => fabricCanvas.off(evt as any, scheduleUpdate));
+      fabricCanvas.off('after:render' as any, scheduleUpdate);
       fabricCanvas.off('selection:created' as any, handleSelection);
       fabricCanvas.off('selection:updated' as any, handleSelection);
       fabricCanvas.off('selection:cleared' as any, () => setSelectedObj(null));
+      if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, [fabricCanvas, logoObj]);
 
