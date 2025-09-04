@@ -178,14 +178,22 @@ export default function PersonalizarPage() {
             const imgProps = typeof ref === 'string' ? {} : (ref.props || {});
             try {
               let src: string | undefined;
+              let createdObjUrl = false;
               if (idVal) {
                 const blob = await getImageBlob(idVal);
-                if (blob) src = URL.createObjectURL(blob);
+                if (blob) {
+                  src = URL.createObjectURL(blob);
+                  createdObjUrl = true;
+                }
               }
               if (!src && urlVal) src = urlVal; // legacy fallback
               if (!src) continue;
               // eslint-disable-next-line no-await-in-loop
               const img = await FabricImage.fromURL(src);
+              // Revocar URL blob temporal si fue creada por nosotros
+              if (createdObjUrl) {
+                try { URL.revokeObjectURL(src); } catch {}
+              }
               // Etiquetar la instancia con el id de IndexedDB para limpieza/guardado confiable
               if (idVal) (img as any).__idbId = idVal;
               img.set({
@@ -421,9 +429,11 @@ export default function PersonalizarPage() {
     if (!fileUp) return;
     try {
       // Guardar el archivo original en IndexedDB como blob
-      const id = await saveImageBlob(fileUp);
-      const objUrl = URL.createObjectURL(fileUp);
+    const id = await saveImageBlob(fileUp);
+    const objUrl = URL.createObjectURL(fileUp);
   const img = await FabricImage.fromURL(objUrl);
+  // Revocar el URL temporal inmediatamente después de cargar
+  try { URL.revokeObjectURL(objUrl); } catch {}
   // Etiquetar la instancia con el id de IndexedDB
   (img as any).__idbId = id;
       const cw = fabricCanvas.width as number;
@@ -454,14 +464,12 @@ export default function PersonalizarPage() {
   useEffect(() => {
     if (!fabricCanvas) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Delete") {
         const active = fabricCanvas.getActiveObject();
         if (active) {
-          fabricCanvas.remove(active);
-          fabricCanvas.discardActiveObject();
-          fabricCanvas.renderAll();
-          toast.success("Elemento eliminado");
+      // Reutilizar la lógica de borrado con limpieza de IndexedDB
+      void handleDeleteObject(active);
         }
       }
     };
@@ -678,6 +686,13 @@ export default function PersonalizarPage() {
       // Silencioso: si falla la limpieza no bloquea la UI
       console.warn('No se pudo borrar blob de IndexedDB', e);
     }
+    // Revocar URL blob si existe en el elemento HTML
+    try {
+      const src: string | undefined = (obj as any)?._element?.src;
+      if (src && src.startsWith('blob:')) {
+        URL.revokeObjectURL(src);
+      }
+    } catch {}
     fabricCanvas.remove(obj);
     fabricCanvas.discardActiveObject();
     fabricCanvas.renderAll();

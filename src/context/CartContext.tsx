@@ -99,7 +99,28 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setItems((prev) => [...prev, { id, quantity: item.quantity, data: item.data }]);
   };
 
-  const removeItem = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeItem = (id: string) => {
+    setItems((prev) => {
+      const itemToRemove = prev.find(i => i.id === id);
+      const next = prev.filter(i => i.id !== id);
+      // Limpieza de blobs: borrar solo ids que ya no están referenciados por otros items
+      if (itemToRemove) {
+        const idsToCheck = Array.from(new Set((itemToRemove.data?.images || []).map((img: any) => img?.id).filter(Boolean))) as string[];
+        if (idsToCheck.length) {
+          (async () => {
+            // Construir set de ids aún usados por 'next'
+            const stillUsed = new Set<string>();
+            next.forEach(it => (it.data?.images || []).forEach((img: any) => { if (img?.id) stillUsed.add(img.id); }));
+            const deletables = idsToCheck.filter(id => !stillUsed.has(id));
+            if (deletables.length) {
+              await Promise.allSettled(deletables.map(did => deleteImageBlob(did)));
+            }
+          })();
+        }
+      }
+      return next;
+    });
+  };
 
   const updateQuantity = (id: string, quantity: number) =>
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity } : i)));
