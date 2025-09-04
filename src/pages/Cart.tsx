@@ -86,7 +86,7 @@ export default function CartPage() {
                   <Checkout />
                 </DialogContent>
               </Dialog>
-              <Button variant="ghost" onClick={() => clear()}>Vaciar carrito</Button>
+              <Button variant="ghost" aria-label="Vaciar carrito" onClick={() => clear()}>Vaciar carrito</Button>
             </div>
             <p className="mt-3 text-xs text-muted-foreground">Recibirás un email de confirmación con instrucciones de contacto.</p>
           </aside>
