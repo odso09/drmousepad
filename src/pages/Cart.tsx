@@ -39,7 +39,12 @@ export default function CartPage() {
                     <h3 className="font-semibold">Mousepad Personalizado</h3>
                     <div className="flex gap-2">
                       <Link to={`/personalizar?id=${it.id}`} className="text-sm underline text-cyan-400 hover:text-cyan-300">Editar</Link>
-                      <button className="text-sm underline text-muted-foreground" onClick={() => removeItem(it.id)}>Eliminar</button>
+                      <button
+                        className="text-sm underline text-muted-foreground"
+                        onClick={() => { removeItem(it.id); toast.success('Producto eliminado del carrito'); }}
+                      >
+                        Eliminar
+                      </button>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">

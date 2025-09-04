@@ -677,8 +677,7 @@ export default function PersonalizarPage() {
     };
     scheduleUpdate();
     const events = ['object:moving', 'object:scaling', 'object:rotating', 'object:added', 'object:removed', 'object:modified'];
-    events.forEach(evt => fabricCanvas.on(evt as any, scheduleUpdate));
-    fabricCanvas.on('after:render' as any, scheduleUpdate);
+  events.forEach(evt => fabricCanvas.on(evt as any, scheduleUpdate));
 
     const handleSelection = () => {
       const active = fabricCanvas.getActiveObject();
@@ -691,8 +690,7 @@ export default function PersonalizarPage() {
     scheduleUpdate();
     handleSelection();
     return () => {
-      events.forEach(evt => fabricCanvas.off(evt as any, scheduleUpdate));
-      fabricCanvas.off('after:render' as any, scheduleUpdate);
+  events.forEach(evt => fabricCanvas.off(evt as any, scheduleUpdate));
       fabricCanvas.off('selection:created' as any, handleSelection);
       fabricCanvas.off('selection:updated' as any, handleSelection);
       fabricCanvas.off('selection:cleared' as any, () => setSelectedObj(null));
@@ -823,7 +821,7 @@ export default function PersonalizarPage() {
             <button
               type="button"
               aria-label="Elegir color desde la pantalla"
-              title="Elegir color de la pantalla"
+              title="Copiar algun color de la pantalla"
               onClick={async () => {
                 if (window.EyeDropper) {
                   try {
@@ -870,6 +868,7 @@ export default function PersonalizarPage() {
               <canvas
                 ref={canvasRef}
                 className="absolute"
+                aria-label="Vista previa del diseño"
                 style={{ width: "100%", height: "100%" }}
               />
               {/* Overlay delete buttons for each object */}
