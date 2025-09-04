@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { deleteImageBlob } from "@/lib/idb";
+import { toast } from "sonner";
 
 // Utilidad para limpiar claves si localStorage supera 4MB
 function clearLargeLocalStorageKeys(limitMB = 4) {
@@ -13,9 +14,8 @@ function clearLargeLocalStorageKeys(limitMB = 4) {
     // Elimina claves grandes o no esenciales
     localStorage.removeItem('personalizar_drmousepad');
     localStorage.removeItem('dr-mousepad-cart');
-    // Puedes agregar más claves si es necesario
-    // Opcional: muestra advertencia
-    alert('Se ha limpiado el almacenamiento local para evitar errores por espacio lleno.');
+    // Aviso no bloqueante
+    toast.warning('Se limpió el almacenamiento local para evitar errores por espacio lleno.');
   }
 }
 

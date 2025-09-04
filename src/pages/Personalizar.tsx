@@ -535,7 +535,11 @@ export default function PersonalizarPage() {
   useEffect(() => {
     if (!fabricCanvas || !logoObj) return;
     logoObj.set({ visible: !logoRemoved } as any);
-    if (!logoRemoved) fabricCanvas.bringObjectToFront(logoObj as any);
+    if (!logoRemoved) {
+      // Asegurar que el logo esté en la esquina elegida con padding al volver a mostrarse
+      positionLogo(fabricCanvas, logoObj, logoPos);
+      fabricCanvas.bringObjectToFront(logoObj as any);
+    }
     fabricCanvas.renderAll();
   }, [logoRemoved, fabricCanvas, logoObj]);
 
@@ -738,7 +742,7 @@ export default function PersonalizarPage() {
         {/* Paso 1 y 2: Tamaño e Imagen */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div className="rounded-xl bg-card border p-5">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-3" id="size-section-title">
               <span style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -756,7 +760,7 @@ export default function PersonalizarPage() {
               <span className="font-bold">Seleccionar tamaño del Mousepad</span>
             </div>
             <Select value={size} onValueChange={setSize}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" aria-labelledby="size-section-title">
                 <SelectValue placeholder="Selecciona tamaño" />
               </SelectTrigger>
               <SelectContent>
@@ -784,6 +788,8 @@ export default function PersonalizarPage() {
               }}>2</span>
               <span className="font-bold">Subir Imagen</span>
             </div>
+            {/* Label oculto para el input de archivo */}
+            <label htmlFor="upload-image" className="sr-only">Subir imagen</label>
             <input
               id="upload-image"
               type="file"
@@ -805,8 +811,8 @@ export default function PersonalizarPage() {
         <div className="rounded-t-xl bg-[#0f172a] px-6 py-3 flex items-center justify-between border border-b-0 border-card mb-0" style={{marginBottom: 0}}>
           <span className="text-lg md:text-xl font-bold text-white tracking-wide">Vista Previa</span>
           <span className="text-lg text-muted-foreground flex items-center gap-2">
-            <span className="text-muted-foreground text-lg">Color de fondo:</span>
-            <ColorPicker color={backgroundColor} onChange={color => {
+            <span id="bgcolor-label" className="text-muted-foreground text-lg">Color de fondo:</span>
+            <ColorPicker ariaLabel="Elegir color de fondo" color={backgroundColor} onChange={color => {
               setBackgroundColor(color);
               if (fabricCanvas) {
                 fabricCanvas.backgroundColor = color;
@@ -816,6 +822,7 @@ export default function PersonalizarPage() {
             {/* Eyedropper button */}
             <button
               type="button"
+              aria-label="Elegir color desde la pantalla"
               title="Elegir color de la pantalla"
               onClick={async () => {
                 if (window.EyeDropper) {
@@ -831,7 +838,7 @@ export default function PersonalizarPage() {
                     // Cancelled or error
                   }
                 } else {
-                  alert('Tu navegador no soporta la herramienta de cuentagotas (EyeDropper).');
+                  toast.info('Tu navegador no soporta la herramienta de cuentagotas (EyeDropper).');
                 }
               }}
               style={{
@@ -858,7 +865,7 @@ export default function PersonalizarPage() {
         {/* Canvas */}
         <div className="rounded-b-xl bg-card border-t-0 border p-5 mb-6">
           <div className={`relative rounded-xl bg-black/80 p-2 ${rgb ? 'animate-rgb-glow' : ''}`}> 
-            {rgb && <div aria-hidden className="led-gradient-ring pointer-events-none absolute inset-0 rounded-xl" />}
+            {rgb && <div aria-hidden="true" className="led-gradient-ring pointer-events-none absolute inset-0 rounded-xl" />}
             <div className="relative flex items-center justify-center w-full h-full rounded-lg overflow-hidden">
               <canvas
                 ref={canvasRef}
@@ -866,7 +873,7 @@ export default function PersonalizarPage() {
                 style={{ width: "100%", height: "100%" }}
               />
               {/* Overlay delete buttons for each object */}
-              {objectOverlays.map(overlay => {
+      {objectOverlays.map(overlay => {
                 if (!selectedObj || selectedObj !== overlay.obj) return null;
                 // Margin between object and button
                 const margin = 8;
@@ -877,6 +884,7 @@ export default function PersonalizarPage() {
                   <button
                     key={overlay.id}
                     type="button"
+        aria-label="Eliminar elemento"
                     onClick={() => handleDeleteObject(overlay.obj)}
                     style={{
                       position: 'absolute',
@@ -938,7 +946,7 @@ export default function PersonalizarPage() {
                 <span className="text-sm font-semibold text-white">Texto</span>
                 <span className="text-sm font-semibold text-white">Color</span>
               </div>
-              <div className="flex gap-2 items-center mb-2">
+        <div className="flex gap-2 items-center mb-2">
                 <Input
                   placeholder="Ingresa tu texto..."
                   className="flex-1"
@@ -946,14 +954,14 @@ export default function PersonalizarPage() {
                   onChange={e => setTextInput(e.target.value)}
                 />
                 <div className="flex flex-col justify-center items-center" style={{height: 40, marginTop: -6}}>
-                  <ColorPicker color={textColor} onChange={setTextColor} />
+          <ColorPicker ariaLabel="Elegir color de texto" color={textColor} onChange={setTextColor} />
                 </div>
               </div>
               {/* Fuente label */}
-              <span className="text-sm font-semibold text-white block mb-1">Fuente</span>
+        <span id="font-label" className="text-sm font-semibold text-white block mb-1">Fuente</span>
               <div className="flex gap-2">
                 <Select value={activeFont} onValueChange={setActiveFont}>
-                  <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full" aria-labelledby="font-label">
                     <SelectValue placeholder="Fuente" />
                   </SelectTrigger>
                   <SelectContent>
@@ -995,9 +1003,9 @@ export default function PersonalizarPage() {
             </div>
             {!logoRemoved && (
               <div className="mt-5 mb-2">
-                <span className="text-sm font-semibold text-white block mb-1">Posición del logo</span>
+                <span id="logo-pos-label" className="text-sm font-semibold text-white block mb-1">Posición del logo</span>
                 <Select value={logoPos} onValueChange={v => setLogoPos(v as typeof logoPos)}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full" aria-labelledby="logo-pos-label">
                     <SelectValue placeholder="Posición del logo" />
                   </SelectTrigger>
                   <SelectContent>

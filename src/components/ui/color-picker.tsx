@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { HexColorPicker } from "react-colorful";
 
-export function ColorPicker({ color, onChange }: { color: string; onChange: (color: string) => void }) {
+export function ColorPicker({ color, onChange, ariaLabel }: { color: string; onChange: (color: string) => void; ariaLabel?: string }) {
   const [show, setShow] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const size = 40;
@@ -21,7 +21,7 @@ export function ColorPicker({ color, onChange }: { color: string; onChange: (col
     <div ref={ref} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
       <button
         type="button"
-        aria-label="Elegir color de texto"
+        aria-label={ariaLabel || "Elegir color"}
         onClick={() => setShow((v) => !v)}
         style={{
           width: size,
