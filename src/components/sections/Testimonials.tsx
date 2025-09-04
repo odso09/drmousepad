@@ -108,11 +108,12 @@ export const Testimonials = () => {
 
                     {/* Stars aligned under the avatar column */}
                     <div className="col-start-1 row-start-2 flex flex-col items-start mt-1">
-                      <div className="flex space-x-1">
+                      <div className="flex space-x-1" aria-hidden="true">
                         {[...Array(testimonial.rating)].map((_, i) => (
                           <Star key={i} className="w-4 h-4 star-fuchsia" />
                         ))}
                       </div>
+                      <span className="sr-only">Calificación: {testimonial.rating} de 5</span>
                     </div>
 
                     <p className="col-start-1 col-span-2 row-start-3 text-sm text-muted-foreground leading-relaxed">"{testimonial.comment}"</p>
@@ -139,11 +140,12 @@ export const Testimonials = () => {
                     </div>
 
                     <div className="col-start-1 row-start-2 flex flex-col items-start mt-1">
-                      <div className="flex space-x-1">
+                      <div className="flex space-x-1" aria-hidden="true">
                         {[...Array(testimonial.rating)].map((_, i) => (
                           <Star key={i} className="w-4 h-4 star-fuchsia" />
                         ))}
                       </div>
+                      <span className="sr-only">Calificación: {testimonial.rating} de 5</span>
                     </div>
 
                     <p className="col-start-1 col-span-2 row-start-3 text-sm text-muted-foreground leading-relaxed">"{testimonial.comment}"</p>
