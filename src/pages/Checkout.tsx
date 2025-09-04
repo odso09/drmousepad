@@ -40,6 +40,8 @@ const Checkout = () => {
 	});
 	const DEFAULT_CENTER = { lat: -25.319822, lng: -57.562523 };
 	const [ubicacion, setUbicacion] = useState<{ lat: number; lng: number } | null>(DEFAULT_CENTER);
+	// Controla si debemos recentrar el mapa (solo al elegir desde sugerencias)
+	const [shouldRecenter, setShouldRecenter] = useState(false);
 	const [enviando, setEnviando] = useState(false);
 	const [mensaje, setMensaje] = useState("");
 	// Autocompletado de dirección
@@ -56,6 +58,7 @@ const Checkout = () => {
 		useMapEvents({
 			click(e) {
 				setUbicacion(e.latlng);
+				setShouldRecenter(false);
 			},
 		});
 		return ubicacion === null ? null : (
@@ -67,6 +70,7 @@ const Checkout = () => {
 						const m = e.target as L.Marker;
 						const pos = m.getLatLng();
 						setUbicacion({ lat: pos.lat, lng: pos.lng });
+						setShouldRecenter(false);
 					}
 				}}
 			/>
@@ -97,14 +101,15 @@ const Checkout = () => {
 	}, [form.direccion]);
 
 	// Recentrar el mapa cuando cambia la ubicación
-	function RecenterOnLocation({ center }: { center: { lat: number; lng: number } | null }) {
+	function RecenterOnLocation({ center, enabled, onDone }: { center: { lat: number; lng: number } | null; enabled: boolean; onDone?: () => void }) {
 		const map = useMap();
 		useEffect(() => {
-			if (center) {
+			if (enabled && center) {
 				const targetZoom = Math.max(map.getZoom(), 13);
 				map.setView(center, targetZoom, { animate: true });
+				onDone?.();
 			}
-		}, [center, map]);
+		}, [enabled, center, map, onDone]);
 		return null;
 	}
 
@@ -218,6 +223,7 @@ const Checkout = () => {
 										setForm({ ...form, direccion: s.display_name });
 										setUbicacion({ lat: parseFloat(s.lat), lng: parseFloat(s.lon) });
 										setShowSuggestions(false);
+										setShouldRecenter(true);
 									}}
 								>
 									{s.display_name}
@@ -244,7 +250,7 @@ const Checkout = () => {
 							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 						/>
 						<LocationMarker />
-						<RecenterOnLocation center={ubicacion} />
+						<RecenterOnLocation center={ubicacion} enabled={shouldRecenter} onDone={() => setShouldRecenter(false)} />
 					</MapContainer>
 					{ubicacion && (
 						<div className="text-xs mt-2 text-muted-foreground">Lat: {ubicacion.lat.toFixed(6)}, Lng: {ubicacion.lng.toFixed(6)}</div>
