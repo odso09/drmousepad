@@ -1,16 +1,32 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/lib/supabaseClient";
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 // Fix icon issue for leaflet in React
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 L.Icon.Default.mergeOptions({
 	iconUrl,
+	iconRetinaUrl,
 	shadowUrl: iconShadow,
 });
+
+// Define and set a default marker icon explicitly to avoid broken image issues in bundlers
+const defaultIcon = L.icon({
+	iconRetinaUrl,
+	iconUrl,
+	shadowUrl: iconShadow,
+	iconSize: [25, 41],
+	iconAnchor: [12, 41],
+	popupAnchor: [1, -34],
+	tooltipAnchor: [16, -28],
+	shadowSize: [41, 41],
+});
+// Apply globally so all <Marker> use it by default
+(L.Marker as any).prototype.options.icon = defaultIcon;
 
 
 const Checkout = () => {
@@ -22,25 +38,75 @@ const Checkout = () => {
 		direccion: "",
 		observacion: "",
 	});
-	const [ubicacion, setUbicacion] = useState<{ lat: number; lng: number } | null>(null);
+	const DEFAULT_CENTER = { lat: -25.319822, lng: -57.562523 };
+	const [ubicacion, setUbicacion] = useState<{ lat: number; lng: number } | null>(DEFAULT_CENTER);
 	const [enviando, setEnviando] = useState(false);
 	const [mensaje, setMensaje] = useState("");
+	// Autocompletado de dirección
+	const [suggestions, setSuggestions] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
+	const [showSuggestions, setShowSuggestions] = useState(false);
+	const [loadingAddr, setLoadingAddr] = useState(false);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		setForm({ ...form, [e.target.name]: e.target.value });
 	};
 
 	// Componente para seleccionar ubicación en el mapa
-		function LocationMarker() {
-			useMapEvents({
-				click(e) {
-					setUbicacion(e.latlng);
-				},
-			});
-			return ubicacion === null ? null : (
-				<Marker position={ubicacion} icon={L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41] })} />
-			);
-		}
+	function LocationMarker() {
+		useMapEvents({
+			click(e) {
+				setUbicacion(e.latlng);
+			},
+		});
+		return ubicacion === null ? null : (
+			<Marker
+				position={ubicacion}
+				draggable
+				eventHandlers={{
+					dragend: (e) => {
+						const m = e.target as L.Marker;
+						const pos = m.getLatLng();
+						setUbicacion({ lat: pos.lat, lng: pos.lng });
+					}
+				}}
+			/>
+		);
+	}
+
+	// Buscar sugerencias cuando cambia la dirección (con debounce)
+	useEffect(() => {
+		const q = form.direccion.trim();
+		if (q.length < 3) { setSuggestions([]); setShowSuggestions(false); return; }
+		setLoadingAddr(true);
+		const controller = new AbortController();
+		const t = window.setTimeout(async () => {
+			try {
+				const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=py&q=${encodeURIComponent(q)}`;
+				const resp = await fetch(url, { signal: controller.signal, headers: { 'Accept-Language': 'es' } });
+				if (!resp.ok) throw new Error('geo lookup failed');
+				const data = await resp.json();
+				setSuggestions(Array.isArray(data) ? data : []);
+				setShowSuggestions(true);
+			} catch (_) {
+				// ignora errores de red/cancelación
+			} finally {
+				setLoadingAddr(false);
+			}
+		}, 300);
+		return () => { clearTimeout(t); controller.abort(); };
+	}, [form.direccion]);
+
+	// Recentrar el mapa cuando cambia la ubicación
+	function RecenterOnLocation({ center }: { center: { lat: number; lng: number } | null }) {
+		const map = useMap();
+		useEffect(() => {
+			if (center) {
+				const targetZoom = Math.max(map.getZoom(), 13);
+				map.setView(center, targetZoom, { animate: true });
+			}
+		}, [center, map]);
+		return null;
+	}
 
 		const handleSubmit = async (e: React.FormEvent) => {
 			e.preventDefault();
@@ -132,11 +198,34 @@ const Checkout = () => {
 					id="direccion"
 					placeholder="Dirección de entrega"
 					value={form.direccion}
-					onChange={handleChange}
+					onChange={(e) => { handleChange(e); setShowSuggestions(true); }}
 					required
 					autoComplete="street-address"
 					className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-zinc-900"
+					onFocus={() => { if (suggestions.length) setShowSuggestions(true); }}
 				/>
+				{showSuggestions && (loadingAddr || suggestions.length > 0) && (
+					<ul role="listbox" className="border rounded mt-1 max-h-56 overflow-auto bg-card shadow-sm">
+						{loadingAddr && (
+							<li className="px-3 py-2 text-sm text-muted-foreground">Buscando...</li>
+						)}
+						{suggestions.map((s, idx) => (
+							<li key={`${s.lat}-${s.lon}-${idx}`}>
+								<button
+									type="button"
+									className="block w-full text-left px-3 py-2 hover:bg-muted"
+									onClick={() => {
+										setForm({ ...form, direccion: s.display_name });
+										setUbicacion({ lat: parseFloat(s.lat), lng: parseFloat(s.lon) });
+										setShowSuggestions(false);
+									}}
+								>
+									{s.display_name}
+								</button>
+							</li>
+						))}
+					</ul>
+				)}
 				<label htmlFor="observacion" className="sr-only">Observaciones</label>
 				<textarea
 					name="observacion"
@@ -146,29 +235,31 @@ const Checkout = () => {
 					onChange={handleChange}
 					className="w-full border rounded px-3 py-2 text-black dark:text-white bg-white dark:bg-zinc-900"
 				/>
-				 <div className="my-4" role="group" aria-labelledby="map-label">
-					 <label id="map-label" className="block mb-2 font-medium">Coloca tu ubicación en el mapa (opcional)</label>
-							 <MapContainer center={[-25.2637, -57.5759]} zoom={13} style={{ height: 220, width: '100%', borderRadius: 12 } as React.CSSProperties}>
-								 <TileLayer
-									 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-									 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-								 />
-								 <LocationMarker />
-							 </MapContainer>
-					 {ubicacion && (
-						 <div className="text-xs mt-2 text-muted-foreground">Lat: {ubicacion.lat.toFixed(6)}, Lng: {ubicacion.lng.toFixed(6)}</div>
-					 )}
-				 </div>
-						  <button
-					 type="submit"
-					 disabled={enviando}
-						  className="btn-hero-static text-sm px-3 py-2 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
-				 >
-					 <span className="material-icons" style={{ fontSize: '1.1em' }} aria-hidden="true"></span>
-					 {enviando ? "Enviando..." : "Continuar"}
-				 </button>
-					{mensaje && <div className="text-green-600 font-semibold mt-2" role="status" aria-live="polite">{mensaje}</div>}
-			</form>
+
+				<div className="my-4" role="group" aria-labelledby="map-label">
+					<label id="map-label" className="block mb-2 font-medium">Coloca tu ubicación en el mapa (opcional)</label>
+					<MapContainer center={DEFAULT_CENTER} zoom={13} style={{ height: 220, width: '100%', borderRadius: 12 } as React.CSSProperties}>
+						<TileLayer
+							attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+							url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+						/>
+						<LocationMarker />
+						<RecenterOnLocation center={ubicacion} />
+					</MapContainer>
+					{ubicacion && (
+						<div className="text-xs mt-2 text-muted-foreground">Lat: {ubicacion.lat.toFixed(6)}, Lng: {ubicacion.lng.toFixed(6)}</div>
+					)}
+				</div>
+						<button
+							type="submit"
+							disabled={enviando}
+							className="btn-hero-static text-sm px-3 py-2 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
+						>
+							<span className="material-icons" style={{ fontSize: '1.1em' }} aria-hidden="true"></span>
+							{enviando ? "Enviando..." : "Continuar"}
+						</button>
+						{mensaje && <div className="text-green-600 font-semibold mt-2" role="status" aria-live="polite">{mensaje}</div>}
+					</form>
 		</div>
 	);
 };
