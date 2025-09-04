@@ -145,6 +145,10 @@ export default function PersonalizarPage() {
     if (!editId || !items.length || !fabricCanvas || restoredOnceRef.current) return;
     const item = items.find(i => i.id === editId);
     if (!item) return;
+    // Restaurar tamaño seleccionado del mousepad
+    if (item.data?.size) {
+      setSize(item.data.size);
+    }
     // Restaurar estado de logo, rgb y backgroundColor
     setLogoRemoved(item.data.logo?.removed ?? false);
     setRgb(item.data.rgb ?? false);
