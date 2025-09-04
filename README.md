@@ -58,3 +58,14 @@ You can deploy this project using your preferred static hosting service (e.g. Ve
 ## Custom domains
 
 If your hosting provider allows, you can connect a custom domain following their documentation.
+
+## Variables de entorno (Supabase)
+
+Este proyecto usa Supabase desde el frontend. Define las siguientes variables en un archivo `.env` (no se comitea) basadas en `.env.example`:
+
+```
+VITE_SUPABASE_URL=<tu_url_supabase>
+VITE_SUPABASE_ANON_KEY=<tu_anon_key>
+```
+
+En desarrollo y producción, Vite expone estas variables como `import.meta.env.VITE_SUPABASE_URL` y `import.meta.env.VITE_SUPABASE_ANON_KEY`.
