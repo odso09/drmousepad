@@ -8,6 +8,8 @@ export const CartSimpleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeWidth={3.2}
     strokeLinecap="round"
     strokeLinejoin="round"
+  aria-hidden="true"
+  focusable="false"
     {...props}
   >
     <circle cx="10" cy="22" r="1.7" stroke="#00e0ff" strokeWidth={2.8} />

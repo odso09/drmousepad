@@ -61,17 +61,6 @@ export const Gallery = () => {
     return () => window.removeEventListener('keydown', handleKey);
   }, [open, currentIndex]);
 
-  // Navegación con teclado en el modal
-  React.useEffect(() => {
-    if (!open) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') nextImage();
-      if (e.key === 'ArrowLeft') prevImage();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [open, currentIndex]);
-
   return (
     <section className="py-20 bg-card">
       <div className="container mx-auto px-6">
@@ -108,8 +97,9 @@ export const Gallery = () => {
               size="icon"
               className="absolute left-4 top-1/2 -translate-y-1/2 btn-cyber"
               onClick={prevImage}
+              aria-label="Anterior"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
 
             <Button
@@ -117,8 +107,9 @@ export const Gallery = () => {
               size="icon"
               className="absolute right-4 top-1/2 -translate-y-1/2 btn-cyber"
               onClick={nextImage}
+              aria-label="Siguiente"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
 
@@ -134,7 +125,7 @@ export const Gallery = () => {
                 aria-label="Anterior"
                 style={{ fontSize: 0 }}
               >
-                <ChevronLeft className="w-8 h-8" />
+                <ChevronLeft className="w-8 h-8" aria-hidden="true" />
               </button>
               <div style={{width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                 <img
@@ -152,7 +143,7 @@ export const Gallery = () => {
                 aria-label="Siguiente"
                 style={{ fontSize: 0 }}
               >
-                <ChevronRight className="w-8 h-8" />
+                <ChevronRight className="w-8 h-8" aria-hidden="true" />
               </button>
             </DialogContent>
           </Dialog>
@@ -168,6 +159,7 @@ export const Gallery = () => {
                   : 'bg-muted hover:bg-muted-foreground'
               }`}
               onClick={() => setCurrentIndex(index)}
+              aria-label={`Ir a imagen ${index + 1}`}
             />
           ))}
         </div>

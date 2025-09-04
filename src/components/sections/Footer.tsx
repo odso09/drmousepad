@@ -30,14 +30,14 @@ export const Footer = () => {
               La mejor calidad en mousepads gaming personalizados de Paraguay.
             </p>
             <div className="flex gap-2">
-              <Button variant="outline" size="icon" className="btn-cyber">
-                <Facebook className="h-4 w-4 text-neon-blue" />
+              <Button variant="outline" size="icon" className="btn-cyber" aria-label="Abrir Facebook">
+                <Facebook className="h-4 w-4 text-neon-blue" aria-hidden="true" />
               </Button>
-              <Button variant="outline" size="icon" className="btn-cyber">
-                <Instagram className="h-4 w-4 text-neon-blue" />
+              <Button variant="outline" size="icon" className="btn-cyber" aria-label="Abrir Instagram">
+                <Instagram className="h-4 w-4 text-neon-blue" aria-hidden="true" />
               </Button>
-              <Button variant="outline" size="icon" className="btn-cyber">
-                <Twitter className="h-4 w-4 text-neon-blue" />
+              <Button variant="outline" size="icon" className="btn-cyber" aria-label="Abrir Twitter">
+                <Twitter className="h-4 w-4 text-neon-blue" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -72,15 +72,15 @@ export const Footer = () => {
             <h4 className="font-semibold text-cyber">Contacto</h4>
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" />
+                <MapPin className="h-4 w-4" aria-hidden="true" />
                 Av. España 123, Asunción, Paraguay
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4" aria-hidden="true" />
                 info@drmousepad.com.py
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Phone className="h-4 w-4" />
+                <Phone className="h-4 w-4" aria-hidden="true" />
                 0981269504
               </div>
             </div>
@@ -97,7 +97,7 @@ export const Footer = () => {
               className="inline-flex items-center justify-center bg-[#25D366] text-white w-12 h-12 rounded-full hover:opacity-90"
             >
               {/* WhatsApp SVG (white) */}
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-6 h-6">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-6 h-6" aria-hidden="true" focusable="false">
                 <path d="M20.52 3.478A11.829 11.829 0 0 0 12.003.2C6.033.2 1.4 4.833 1.4 10.803c0 1.95.503 3.858 1.46 5.56L.2 23.8l7.64-2.02a10.57 10.57 0 0 0 4.163.85c5.97 0 10.603-4.633 10.603-10.603 0-2.83-1.103-5.49-3.086-7.55zM12.003 20.4c-1.17 0-2.316-.18-3.36-.52l-.24-.08-4.52 1.2 1.22-3.96-.16-.26A8.03 8.03 0 0 1 4.003 10.8c0-4.42 3.59-8.01 8.01-8.01 2.14 0 4.15.83 5.66 2.34 1.5 1.5 2.33 3.51 2.33 5.66 0 4.42-3.59 8.01-8.01 8.01z" />
                 <path d="M17.58 14.1c-.3-.15-1.78-.88-2.05-.98-.27-.1-.47-.15-.67.15-.2.3-.77.98-.95 1.18-.18.2-.37.23-.68.08-.3-.15-1.27-.47-2.42-1.48-.9-.8-1.5-1.78-1.67-2.08-.17-.3-.02-.46.13-.61.13-.13.3-.33.45-.5.15-.17.2-.3.3-.5.1-.18.05-.33-.02-.48-.08-.15-.67-1.6-.92-2.2-.24-.58-.48-.5-.67-.51l-.57-.01c-.18 0-.48.07-.73.33-.25.27-.95.93-.95 2.27s.98 2.63 1.12 2.81c.15.18 1.94 3 4.7 4.2 1.56.67 2.21.86 2.97.9.76.04 1.67-.27 1.91-1.06.24-.79.24-1.46.17-1.6-.07-.13-.27-.2-.57-.35z" />
               </svg>
