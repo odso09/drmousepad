@@ -29,7 +29,7 @@ export const Hero = () => {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/personalizar">
-                <Button className="btn-hero text-lg px-8 py-6">
+                <Button className="btn-hero-static text-lg px-8 py-6">
                   Comienza a Personalizar
                 </Button>
               </Link>

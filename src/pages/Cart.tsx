@@ -70,7 +70,7 @@ export default function CartPage() {
               <Dialog>
                 <DialogTrigger asChild>
                   <Button
-                    className="btn-hero text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
+                    className="btn-hero-static text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
                     aria-label="Finalizar compra"
                   >
                     <span className="material-icons" style={{ fontSize: '1.2em' }}></span>

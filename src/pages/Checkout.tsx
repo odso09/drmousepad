@@ -145,10 +145,10 @@ const Checkout = () => {
 						 <div className="text-xs mt-2 text-muted-foreground">Lat: {ubicacion.lat.toFixed(6)}, Lng: {ubicacion.lng.toFixed(6)}</div>
 					 )}
 				 </div>
-				 <button
+						  <button
 					 type="submit"
 					 disabled={enviando}
-					 className="btn-hero text-sm px-3 py-2 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
+							  className="btn-hero-static text-sm px-3 py-2 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
 					 aria-label="Continuar"
 				 >
 					 <span className="material-icons" style={{ fontSize: '1.1em' }}></span>
