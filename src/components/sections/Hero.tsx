@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import logo from '../../assets/logo.png';
 import heroImage from "@/assets/hero-mousepad.jpg";
 
 export const Hero = () => {
@@ -9,7 +8,7 @@ export const Hero = () => {
       <div className="absolute inset-0 bg-gradient-to-r from-background/90 to-transparent z-10" />
       
       <div className="absolute inset-0">
-        <img src={heroImage} alt="Hero" className="w-full h-full object-cover" />
+        <img src={heroImage} alt="" aria-hidden="true" className="w-full h-full object-cover" />
       </div>
       
       <div className="container mx-auto px-6 relative z-20">

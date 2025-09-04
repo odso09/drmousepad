@@ -12,7 +12,7 @@ export const Header = () => {
       <div className="container flex items-center justify-between h-16">
   <Link to="/" className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md">
 					<div className="flex items-center gap-4">
-						<img src={logo} alt="Dr Mousepad" className="h-24" />
+                        <img src={logo} alt="" aria-hidden="true" className="h-24" />
 						<div>
 							<div className="text-2xl lg:text-3xl font-extrabold tracking-wide text-neon">Dr Mousepad</div>
 						</div>
