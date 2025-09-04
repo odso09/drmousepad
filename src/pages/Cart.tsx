@@ -40,7 +40,7 @@ export default function CartPage() {
                     <div className="flex gap-2">
                       <Link to={`/personalizar?id=${it.id}`} className="text-sm underline text-cyan-400 hover:text-cyan-300">Editar</Link>
                       <button
-                        className="text-sm underline text-muted-foreground"
+                        className="text-sm underline text-red-500 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded"
                         onClick={() => { removeItem(it.id); toast.success('Producto eliminado del carrito'); }}
                       >
                         Eliminar
