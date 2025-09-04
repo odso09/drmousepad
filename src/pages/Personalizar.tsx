@@ -427,6 +427,7 @@ export default function PersonalizarPage() {
       },
     ]);
     setTextInput("");
+  toast.success('Texto agregado');
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
