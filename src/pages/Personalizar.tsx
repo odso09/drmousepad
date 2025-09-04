@@ -399,7 +399,11 @@ export default function PersonalizarPage() {
 
   const [textInput, setTextInput] = useState("");
   const addText = () => {
-    if (!fabricCanvas || !textInput.trim()) return;
+    if (!fabricCanvas) return;
+    if (!textInput.trim()) {
+      toast.info('Ingresa un texto antes de agregar');
+      return;
+    }
     const id = `${Date.now()}`;
     const tb = new Textbox(textInput, {
       fontFamily: activeFont,

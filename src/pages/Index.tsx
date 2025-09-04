@@ -24,7 +24,7 @@ const Index = () => {
       {/* Botón Empieza a Personalizar antes de los comentarios */}
       <div className="flex justify-center py-8 sm:py-12 px-2">
         <Link to="/personalizar" aria-label="Ir a la página de personalización">
-          <Button className="btn-hero-static text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 focus-visible:ring-2 focus-visible:ring-cyan-400" aria-label="Empieza a Personalizar">
+          <Button className="btn-hero-static text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 focus-visible:ring-2 focus-visible:ring-cyan-400">
             Empieza a Personalizar
           </Button>
         </Link>
