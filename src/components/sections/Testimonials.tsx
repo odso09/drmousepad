@@ -58,11 +58,18 @@ export const Testimonials = () => {
   const innerRef = useRef<HTMLDivElement | null>(null);
   const groupRef = useRef<HTMLDivElement | null>(null);
   const widthRef = useRef(0); // width of a single group
-  const [posX, setPosX] = useState(0); // current translateX in px
+  const posXRef = useRef(0); // current translateX in px
   const isDraggingRef = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartXRef = useRef(0);
   const startPosXRef = useRef(0);
+
+  const applyTransform = (x: number) => {
+    const el = innerRef.current;
+    if (el) {
+      el.style.transform = `translate3d(${x}px, 0, 0)`;
+    }
+  };
 
   const SPEED_PX_PER_SEC = 40; // auto-scroll speed (right->left)
 
@@ -90,16 +97,14 @@ export const Testimonials = () => {
       const dt = (now - last) / 1000;
       last = now;
       if (!isDraggingRef.current) {
-        setPosX((prev) => {
-          let next = prev - SPEED_PX_PER_SEC * dt; // move left
-          const w = widthRef.current;
-          if (w > 0) {
-            // wrap to keep in [-w, 0)
-            while (next <= -w) next += w;
-            while (next > 0) next -= w;
-          }
-          return next;
-        });
+        let next = posXRef.current - SPEED_PX_PER_SEC * dt; // move left
+        const w = widthRef.current;
+        if (w > 0) {
+          while (next <= -w) next += w;
+          while (next > 0) next -= w;
+        }
+        posXRef.current = next;
+        applyTransform(next);
       }
       raf = requestAnimationFrame(tick);
     };
@@ -112,7 +117,7 @@ export const Testimonials = () => {
     isDraggingRef.current = true;
     setIsDragging(true);
     dragStartXRef.current = e.clientX;
-    startPosXRef.current = posX;
+    startPosXRef.current = posXRef.current;
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {}
@@ -120,6 +125,7 @@ export const Testimonials = () => {
 
   const onPointerMove: React.PointerEventHandler<HTMLDivElement> = (e) => {
     if (!isDraggingRef.current) return;
+    e.preventDefault();
     const delta = e.clientX - dragStartXRef.current;
     let next = startPosXRef.current + delta; // allow both directions
     const w = widthRef.current;
@@ -127,7 +133,8 @@ export const Testimonials = () => {
       while (next <= -w) next += w;
       while (next > 0) next -= w;
     }
-    setPosX(next);
+    posXRef.current = next;
+    applyTransform(next);
   };
 
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -168,18 +175,14 @@ export const Testimonials = () => {
             onPointerMove={onPointerMove}
             onPointerUp={endDrag}
             onPointerCancel={endDrag}
-            onPointerLeave={(e) => {
-              if (isDraggingRef.current) endDrag(e);
-            }}
           >
             <div
               ref={innerRef}
               className="marquee-inner no-select"
               style={{
                 willChange: "transform",
-                transform: `translate3d(${posX}px, 0, 0)`,
                 cursor: isDragging ? "grabbing" : "grab",
-                touchAction: "pan-x",
+                touchAction: "none",
               }}
             >
               <div ref={groupRef} className="marquee-group">
