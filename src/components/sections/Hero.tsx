@@ -16,7 +16,7 @@ export const Hero = () => {
         <div className="space-y-8 -mt-12">
       <div className="space-y-4">
           <h1 className="text-5xl lg:text-6xl font-black text-cyber leading-tight capitalize">
-                  Tu Mousepad Gamer
+                  Tu Mousepad
                   <span className="block text-muted-foreground">como nunca antes</span>
                 </h1>
 
