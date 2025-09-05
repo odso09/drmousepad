@@ -62,8 +62,8 @@ export const Gallery = () => {
   }, [open, currentIndex]);
 
   return (
-    <section className="py-20 bg-card">
-      <div className="container mx-auto px-6">
+    <section className="py-16 sm:py-20 bg-card">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-cyber mb-4">
             Galería de Diseños
@@ -73,7 +73,7 @@ export const Gallery = () => {
           </p>
         </div>
 
-        <div className="relative max-w-4xl mx-auto">
+  <div className="relative max-w-5xl mx-auto">
           <div className="relative overflow-hidden rounded-xl card-gamer">
             <div 
               className="flex transition-transform duration-500 ease-in-out"
@@ -84,7 +84,7 @@ export const Gallery = () => {
                   <img
                     src={image.src}
                     alt={image.alt}
-                    className="w-[900px] h-[520px] object-cover mx-auto cursor-zoom-in"
+        className="w-full max-w-[900px] aspect-[16/9] h-auto object-cover mx-auto cursor-zoom-in"
                     loading="lazy"
                     onClick={() => { setCurrentIndex(idx); setOpen(true); }}
                   />
@@ -95,7 +95,7 @@ export const Gallery = () => {
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-4 top-1/2 -translate-y-1/2 btn-cyber"
+              className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 btn-cyber"
               onClick={prevImage}
               aria-label="Anterior"
             >
@@ -105,7 +105,7 @@ export const Gallery = () => {
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-4 top-1/2 -translate-y-1/2 btn-cyber"
+              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 btn-cyber"
               onClick={nextImage}
               aria-label="Siguiente"
             >
@@ -121,29 +121,29 @@ export const Gallery = () => {
               <p className="sr-only" id="gallery-modal-desc">Modal de galería, usa las flechas para navegar entre imágenes.</p>
               <button
                 onClick={prevImage}
-                className="absolute left-6 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 z-50 focus:outline-none"
+                className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 sm:p-3 z-50 focus:outline-none"
                 aria-label="Anterior"
                 style={{ fontSize: 0 }}
               >
-                <ChevronLeft className="w-8 h-8" aria-hidden="true" />
+                <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" aria-hidden="true" />
               </button>
               <div style={{width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                 <img
                   src={galleryImages[currentIndex].src}
                   alt={galleryImages[currentIndex].alt}
                   className="object-contain rounded-xl shadow-2xl bg-[#111]"
-                  style={{ maxWidth: '90vw', maxHeight: '90vh', margin: 'auto', display: 'block', boxSizing: 'border-box' }}
+                  style={{ maxWidth: '94vw', maxHeight: '90vh', margin: 'auto', display: 'block', boxSizing: 'border-box' }}
                   aria-labelledby="gallery-modal-title"
                   aria-describedby="gallery-modal-desc"
                 />
               </div>
               <button
                 onClick={nextImage}
-                className="absolute right-6 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 z-50 focus:outline-none"
+                className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 sm:p-3 z-50 focus:outline-none"
                 aria-label="Siguiente"
                 style={{ fontSize: 0 }}
               >
-                <ChevronRight className="w-8 h-8" aria-hidden="true" />
+                <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" aria-hidden="true" />
               </button>
             </DialogContent>
           </Dialog>

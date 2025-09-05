@@ -41,9 +41,9 @@ export const Features = () => {
           </p>
         </div>
 
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 sm:gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="card-gamer card-gamer--purple group h-60 min-w-[16rem] flex items-start pt-6 px-4">
+            <div key={index} className="card-gamer card-gamer--purple group h-60 flex items-start pt-6 px-4">
               <div className="grid grid-cols-[64px_1fr] gap-4 items-start w-full">
         <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                   {index === 3 ? (
