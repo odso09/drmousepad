@@ -30,12 +30,17 @@ export default function CartPage() {
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-4">
             {items.map((it) => (
-              <div key={it.id} className="flex gap-4 border border-border rounded-lg p-3 bg-card">
+              <div key={it.id} className="flex flex-col sm:flex-row gap-4 border border-border rounded-lg p-3 bg-card">
                 {it.data.thumbnail && (
-                  <img src={it.data.thumbnail} alt="Diseño del Mousepad" className="w-40 h-28 object-cover rounded" loading="lazy" />
+                  <img
+                    src={it.data.thumbnail}
+                    alt="Diseño del Mousepad"
+                    className="w-28 h-20 sm:w-40 sm:h-28 object-cover rounded"
+                    loading="lazy"
+                  />
                 )}
-                <div className="flex-1">
-                  <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <h3 className="font-semibold">Mousepad Personalizado</h3>
                     <div className="flex gap-2">
                       <Link to={`/personalizar?id=${it.id}`} className="text-sm underline text-cyan-400 hover:text-cyan-300">Editar</Link>
@@ -56,12 +61,12 @@ export default function CartPage() {
                       it.data.logo.position
                     )}
                   </p>
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
                     <label className="text-sm">Cantidad</label>
-                    <Input type="number" className="w-20" value={it.quantity} min={1} onChange={(e) => updateQuantity(it.id, Math.max(1, parseInt(e.target.value || '1')))} />
+                    <Input type="number" className="w-16 sm:w-20" value={it.quantity} min={1} onChange={(e) => updateQuantity(it.id, Math.max(1, parseInt(e.target.value || '1')))} />
                   </div>
                 </div>
-                <div className="text-right font-semibold min-w-[120px]">{(it.data.total * it.quantity).toLocaleString()} Gs</div>
+                <div className="font-semibold sm:text-right sm:min-w-[120px] self-end sm:self-auto">{(it.data.total * it.quantity).toLocaleString()} Gs</div>
               </div>
             ))}
           </div>
