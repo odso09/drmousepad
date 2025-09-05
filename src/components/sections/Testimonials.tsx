@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
 
 const testimonials = [
   {
@@ -53,7 +54,89 @@ const testimonials = [
 ];
 
 export const Testimonials = () => {
-  // We'll use a CSS-based marquee: duplicate the items in the DOM and animate the track
+  // Auto-scrolling marquee with manual drag/swipe to advance/rewind
+  const innerRef = useRef<HTMLDivElement | null>(null);
+  const groupRef = useRef<HTMLDivElement | null>(null);
+  const widthRef = useRef(0); // width of a single group
+  const [posX, setPosX] = useState(0); // current translateX in px
+  const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartXRef = useRef(0);
+  const startPosXRef = useRef(0);
+
+  const SPEED_PX_PER_SEC = 40; // auto-scroll speed (right->left)
+
+  // Observe width of the group for seamless wrapping
+  useEffect(() => {
+    if (!groupRef.current) return;
+    const updateWidth = () => {
+      widthRef.current = groupRef.current?.getBoundingClientRect().width || 0;
+    };
+    updateWidth();
+    const ro = new ResizeObserver(() => updateWidth());
+    ro.observe(groupRef.current);
+    window.addEventListener("resize", updateWidth);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", updateWidth);
+    };
+  }, []);
+
+  // Auto ticker
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      if (!isDraggingRef.current) {
+        setPosX((prev) => {
+          let next = prev - SPEED_PX_PER_SEC * dt; // move left
+          const w = widthRef.current;
+          if (w > 0) {
+            // wrap to keep in [-w, 0)
+            while (next <= -w) next += w;
+            while (next > 0) next -= w;
+          }
+          return next;
+        });
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Pointer/Touch handlers
+  const onPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    dragStartXRef.current = e.clientX;
+    startPosXRef.current = posX;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const onPointerMove: React.PointerEventHandler<HTMLDivElement> = (e) => {
+    if (!isDraggingRef.current) return;
+    const delta = e.clientX - dragStartXRef.current;
+    let next = startPosXRef.current + delta; // allow both directions
+    const w = widthRef.current;
+    if (w > 0) {
+      while (next <= -w) next += w;
+      while (next > 0) next -= w;
+    }
+    setPosX(next);
+  };
+
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+  };
 
   return (
     <section className="py-20 bg-card">
@@ -76,19 +159,30 @@ export const Testimonials = () => {
             .marquee { overflow: hidden; }
             .marquee-inner { display: flex; gap: 12px; align-items: stretch; }
             .marquee-group { display: flex; gap: 12px; }
-
-            /* animate the inner wrapper: translateX from 0 -> -50% for seamless loop */
-            @keyframes marqueeMove {
-              0% { transform: translate3d(0,0,0); }
-              100% { transform: translate3d(-50%,0,0); }
-            }
-
-            .marquee-inner.animate { animation: marqueeMove 30s linear infinite; }
+            .no-select { user-select: none; -webkit-user-select: none; -ms-user-select: none; }
           `}</style>
 
-          <div className="marquee">
-            <div className="marquee-inner animate" style={{ willChange: 'transform' }}>
-              <div className="marquee-group">
+          <div
+            className="marquee"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+            onPointerLeave={(e) => {
+              if (isDraggingRef.current) endDrag(e);
+            }}
+          >
+            <div
+              ref={innerRef}
+              className="marquee-inner no-select"
+              style={{
+                willChange: "transform",
+                transform: `translate3d(${posX}px, 0, 0)`,
+                cursor: isDragging ? "grabbing" : "grab",
+                touchAction: "pan-x",
+              }}
+            >
+              <div ref={groupRef} className="marquee-group">
                 {testimonials.map((testimonial) => (
                   <div
                     key={testimonial.id}
