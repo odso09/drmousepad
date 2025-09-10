@@ -14,7 +14,7 @@ const Index = () => {
     <>
       <SEO
         title="Mousepads Personalizados Paraguay | Dr Mousepad"
-        description="Diseña tu propio mousepad gamer con luces RGB, calidad premium y envío gratis a todo Paraguay. Personaliza tamaño, color, logo y texto. ¡Haz único tu escritorio!"
+        description="Diseña tu propio mousepad con luces RGB, calidad premium y envío gratis a todo Paraguay. Personaliza tamaño, color, logo y texto. ¡Haz único tu escritorio!"
         canonical="https://drmousepad.com/"
       />
       <main className="min-h-screen bg-background flex flex-col">

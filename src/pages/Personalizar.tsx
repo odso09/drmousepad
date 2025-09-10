@@ -563,13 +563,37 @@ export default function PersonalizarPage() {
 
   const handleAddToCart = async () => {
     if (!fabricCanvas) return;
-    // Exportar thumbnail de mejor calidad (PNG escalado) para vista normal
+    // Exportar thumbnail adaptativo: calcula multiplier según la imagen de mayor resolución
+    // Objetivo: conservar detalle sin inflar demasiado (rango 2x - 4x)
     let dataUrl: string;
+    const baseW = (fabricCanvas.getWidth && fabricCanvas.getWidth()) || (fabricCanvas as any).width || 960;
+    let maxNatural = 0;
     try {
-      dataUrl = (fabricCanvas as any).toDataURL({ format: 'png', multiplier: 2 });
+      const imgs = fabricCanvas.getObjects().filter(o => o.type === 'image') as any[];
+      for (const img of imgs) {
+        const el: HTMLImageElement | undefined = (img as any)._element;
+        if (!el) continue;
+        const nw = el.naturalWidth || el.width || 0;
+        if (nw > maxNatural) maxNatural = nw;
+      }
+    } catch {/* silencioso */}
+    // Ratio entre la mayor imagen y el ancho del canvas visible
+    let ratio = maxNatural && baseW ? maxNatural / baseW : 0;
+    // Si no hay imágenes grandes, mantener mínimo 2 para nitidez de textos
+    if (!ratio || ratio < 2) ratio = 2;
+    // Limitar techo para no explotar memoria (puedes ajustar a 5 si lo ves estable)
+    let multiplier = Math.min(ratio, 4);
+    // Redondear a 1 decimal para estabilidad
+    multiplier = Math.round(multiplier * 10) / 10;
+    try {
+      dataUrl = (fabricCanvas as any).toDataURL({ format: 'png', multiplier });
     } catch {
-      // Fallback simple
-      dataUrl = (fabricCanvas as any).toDataURL({ format: 'png' });
+      // Fallback: intentar con 2, luego sin multiplier
+      try {
+        dataUrl = (fabricCanvas as any).toDataURL({ format: 'png', multiplier: 2 });
+      } catch {
+        dataUrl = (fabricCanvas as any).toDataURL({ format: 'png' });
+      }
     }
 
     // Generar JSON y luego incrustar las imágenes como dataURL para evitar pérdida (blob: expirados)

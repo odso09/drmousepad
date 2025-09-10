@@ -25,15 +25,31 @@ const sizeToPixels = (tamano?: string): { w: number; h: number } => {
 	return map[tamano] || { w: 3840, h: 1920 };
 };
 
-// Renderizador de alta resolución a partir de canvas_json
-async function renderHighRes(canvasJson: any, tamano?: string): Promise<Blob> {
-	const { w, h } = sizeToPixels(tamano);
+// Renderizador de alta resolución a partir de canvas_json (usando multiplier)
+async function renderHighRes(rawJson: any, tamano?: string): Promise<Blob> {
 	const fabricNs = await import('fabric');
-	// Forzar mejor calidad de escalado
-	(fabricNs as any).configureLogging?.({});
+	const canvasJson = JSON.parse(JSON.stringify(rawJson || {})); // copia defensiva
+	const TRANSPARENT_PIXEL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP4BwQACfsD/qBDnV8AAAAASUVORK5CYII=';
+
+	// Reparar imágenes con blob: expirado sustituyéndolas por pixel transparente (evita fallo total)
+	if (Array.isArray(canvasJson?.objects)) {
+		for (const obj of canvasJson.objects) {
+			if (obj.type === 'image' && typeof obj.src === 'string' && obj.src.startsWith('blob:')) {
+				obj.src = TRANSPARENT_PIXEL;
+			}
+		}
+	}
+
+	// Detectar dimensiones originales del canvas
+	const origW = canvasJson?.width || canvasJson?.w ||  (canvasJson?.objects?.length ? Math.max(...canvasJson.objects.filter((o:any)=>o.left!=null && o.width!=null).map((o:any)=> (o.left||0) + (o.width||0))) : 960) || 960;
+	const origH = canvasJson?.height || canvasJson?.h ||  (canvasJson?.objects?.length ? Math.max(...canvasJson.objects.filter((o:any)=>o.top!=null && o.height!=null).map((o:any)=> (o.top||0) + (o.height||0))) : 480) || 480;
+
+	const target = sizeToPixels(tamano);
+	const mult = Math.min( Math.max( (target.w / origW), 2), 8 ); // mínimo 2x, máximo 8x por seguridad
+
 	const canvas = new fabricNs.Canvas(undefined as any, {
-		width: w,
-		height: h,
+		width: origW,
+		height: origH,
 		backgroundColor: (canvasJson?.backgroundColor || canvasJson?.background) ?? '#000',
 		imageSmoothingEnabled: true,
 		imageSmoothingQuality: 'high'
@@ -45,10 +61,16 @@ async function renderHighRes(canvasJson: any, tamano?: string): Promise<Blob> {
 		} catch (e) { reject(e); }
 	});
 
-	// Asegurar que cada imagen tenga objectCaching para gran tamaño
 	canvas.getObjects().forEach((o: any) => { if (o.type === 'image') o.objectCaching = true; });
 	canvas.renderAll();
-	const dataUrl = (canvas as any).toDataURL({ format: 'png', quality: 1 });
+
+	// Exportar con multiplier calculado
+	let dataUrl: string;
+	try {
+		dataUrl = (canvas as any).toDataURL({ format: 'png', multiplier: mult });
+	} catch {
+		dataUrl = (canvas as any).toDataURL({ format: 'png' });
+	}
 	const resp = await fetch(dataUrl);
 	return await resp.blob();
 }
@@ -96,7 +118,6 @@ export default function AdminPedidos() {
 	const handleDownloadHighRes = async (p: Pedido) => {
 		try {
 			if (!p.canvas_json) { toast.info('Sin canvas_json para alta resolución'); return; }
-			// intentar deducir tamaño del producto principal si existe
 			const { data: productos } = await supabase.from('pedido_productos').select('tamano').eq('pedido_id', p.id).limit(1);
 			const tamano = productos && productos[0]?.tamano;
 			const blob = await renderHighRes(p.canvas_json, tamano);
@@ -109,7 +130,7 @@ export default function AdminPedidos() {
 			a.remove();
 			URL.revokeObjectURL(url);
 		} catch (e) {
-			toast.error('No se pudo generar alta resolución');
+			toast.error('No se pudo generar alta resolución (revisa si el pedido es antiguo sin imágenes embebidas)');
 		}
 	};
 

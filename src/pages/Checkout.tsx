@@ -34,6 +34,8 @@ const Checkout = () => {
 	const [geolocating, setGeolocating] = useState(false);
 	const [enviando, setEnviando] = useState(false);
 	const [mensaje, setMensaje] = useState("");
+	const [progress, setProgress] = useState(0); // 0-100
+	const [showProgress, setShowProgress] = useState(false);
 	const [suggestions, setSuggestions] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
 	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [loadingAddr, setLoadingAddr] = useState(false);
@@ -147,13 +149,18 @@ const Checkout = () => {
 		e.preventDefault();
 		setEnviando(true);
 		setMensaje("");
+		setShowProgress(true);
+		setProgress(5);
 		try {
 			if (!items || items.length === 0) {
 				setMensaje("Tu carrito está vacío.");
 				setEnviando(false);
+				setShowProgress(false);
 				return;
 			}
 
+			console.time && console.time('checkout-total');
+			console.time && console.time('pedido-insert');
 			// 1) Insertar pedido y obtener su id
 			const pedidoRes = await supabase
 				.from('pedidos')
@@ -177,7 +184,10 @@ const Checkout = () => {
 				.single();
 			if (pedidoRes.error) throw pedidoRes.error;
 			const pedidoId: string = pedidoRes.data.id;
+			console.timeEnd && console.timeEnd('pedido-insert');
+			setProgress(15);
 
+			console.time && console.time('thumb-upload');
 			// 2) Subir imagen final del primer item
 			let publicUrl: string | null = null;
 			const first = items[0];
@@ -194,11 +204,14 @@ const Checkout = () => {
 					publicUrl = null;
 				}
 			}
+			console.timeEnd && console.timeEnd('thumb-upload');
+			setProgress(prev => prev < 30 ? 30 : prev);
 
-			// 3) Actualizar pedido con URL final y canvas_json
+			// 3) Actualizar pedido con URL final y canvas_json (no bloquear pasos siguientes con espera larga)
 			const canvasJson = (first as any)?.canvasJson ?? null;
-			await supabase.from('pedidos').update({ url_imagen_final: publicUrl, canvas_json: canvasJson }).eq('id', pedidoId);
+			const pedidoUpdatePromise = supabase.from('pedidos').update({ url_imagen_final: publicUrl, canvas_json: canvasJson }).eq('id', pedidoId);
 
+			console.time && console.time('productos-insert');
 			// 4) Insertar productos
 			const productosPayload = items.map((i) => ({
 				pedido_id: pedidoId,
@@ -211,79 +224,112 @@ const Checkout = () => {
 				total: (i.data as any)?.total ?? null,
 				cantidad: (i as any).quantity ?? 1,
 			}));
-					const prodInsert = await supabase.from('pedido_productos').insert(productosPayload).select('id');
-					if (prodInsert.error) throw prodInsert.error;
-					const productoIds: string[] = (prodInsert.data as any[]).map(r => r.id);
+			const prodInsert = await supabase.from('pedido_productos').insert(productosPayload).select('id');
+			if (prodInsert.error) throw prodInsert.error;
+			const productoIds: string[] = (prodInsert.data as any[]).map(r => r.id);
+			console.timeEnd && console.timeEnd('productos-insert');
+			setProgress(prev => prev < 45 ? 45 : prev);
 
-					// 5) Por cada producto: subir imágenes a Storage y registrar en producto_imagenes
-					for (let idx = 0; idx < items.length; idx++) {
-						const prodId = productoIds[idx];
-						const item = items[idx] as any;
-						const images: Array<{ id?: string; url?: string; props?: any }> = item?.data?.images || [];
-						const imageRows: Array<any> = [];
-						for (let i = 0; i < images.length; i++) {
-							const im = images[i];
-							let storageUrl: string | null = null;
-							// Intentar obtener blob desde IndexedDB si hay id
-							let blob: Blob | null = null;
-							if (im.id) {
-								try { blob = await getImageBlob(im.id) as Blob; } catch { blob = null; }
-							}
-							// Si no hay blob pero hay url, intentar fetch
-							if (!blob && im.url) {
-								try {
-									const resp = await fetch(im.url);
-									if (resp.ok) blob = await resp.blob();
-								} catch {
-									// ignorar
-								}
-							}
-							if (blob) {
-								try {
-									const ext = mimeToExt(blob.type);
-									const path = `pedidos/${pedidoId}/productos/${prodId}/imagenes/${Date.now()}_${i}.${ext}`;
-									const { error: upErr } = await supabase.storage.from('designs').upload(path, blob, { contentType: blob.type || 'image/png', upsert: true });
-									if (!upErr) {
-										const { data } = supabase.storage.from('designs').getPublicUrl(path);
-										storageUrl = data?.publicUrl ?? null;
-									}
-								} catch {
-									// continuar a fallback
-								}
-							}
-							// Fallback: si no se pudo subir pero teníamos una url (remota), usarla para no perder referencia
-							if (!storageUrl && im.url) storageUrl = im.url;
-							if (storageUrl) {
-								imageRows.push({ producto_id: prodId, url_storage: storageUrl, props: im.props || null });
-							}
+			// 5) Subir imágenes y recolectar filas en paralelo (con límite de concurrencia)
+			console.time && console.time('imagenes-total');
+			const allImageTasks: Array<() => Promise<any | null>> = [];
+			items.forEach((it, idx) => {
+				const prodId = productoIds[idx];
+				const images: Array<{ id?: string; url?: string; props?: any }> = (it as any)?.data?.images || [];
+				images.forEach((im, i) => {
+					allImageTasks.push(async () => {
+						let blob: Blob | null = null;
+						if (im.id) {
+							try { blob = await getImageBlob(im.id) as Blob; } catch { blob = null; }
 						}
-						if (imageRows.length) {
-							// Insertar filas de imagenes para este producto
-							await supabase.from('producto_imagenes').insert(imageRows);
+						if (!blob && im.url) {
+							try {
+								const resp = await fetch(im.url);
+								if (resp.ok) blob = await resp.blob();
+							} catch {}
 						}
+						let storageUrl: string | null = null;
+						if (blob) {
+							try {
+								const ext = mimeToExt(blob.type);
+								const path = `pedidos/${pedidoId}/productos/${prodId}/imagenes/${Date.now()}_${Math.random().toString(36).slice(2)}_${i}.${ext}`;
+								const { error: upErr } = await supabase.storage.from('designs').upload(path, blob, { contentType: blob.type || 'image/png', upsert: true });
+								if (!upErr) {
+									const { data } = supabase.storage.from('designs').getPublicUrl(path);
+									storageUrl = data?.publicUrl ?? null;
+								}
+							} catch {}
+						}
+						if (!storageUrl && im.url) storageUrl = im.url;
+						if (storageUrl) return { producto_id: prodId, url_storage: storageUrl, props: im.props || null };
+						return null;
+					});
+				});
+			});
 
-						// 6) Registrar textos del producto en producto_textos
-						const texts: Array<any> = item?.data?.texts || [];
-						if (texts.length) {
-							const textRows = texts.map((t: any) => ({
-								producto_id: prodId,
-								contenido: t.content,
-								fuente: t.font,
-								color_relleno: t.fill,
-								tamano_fuente: t.fontSize,
-								left: t.left,
-								top: t.top,
-								escala_x: t.scaleX,
-								escala_y: t.scaleY,
-								angulo: t.angle,
-								ancho: t.width,
-								alto: t.height,
-								origen_x: t.originX,
-								origen_y: t.originY,
-							}));
-							await supabase.from('producto_textos').insert(textRows);
-						}
+			const runLimited = async <T,>(tasks: (() => Promise<T>)[], limit = 5): Promise<T[]> => {
+				const results: T[] = [];
+				let idx = 0;
+				async function worker() {
+					while (idx < tasks.length) {
+						const current = idx++;
+						results[current] = await tasks[current]();
 					}
+				}
+				const workers = Array.from({ length: Math.min(limit, tasks.length) }, () => worker());
+				await Promise.all(workers);
+				return results;
+			};
+
+			let completedImages = 0;
+			const totalImages = allImageTasks.length || 1;
+			const imageRowsRaw = await runLimited(allImageTasks.map(t => async () => {
+				const r = await t();
+				completedImages++;
+				// Reservar rango 45-75 para imágenes
+				setProgress(45 + Math.min(30, Math.round((completedImages / totalImages) * 30)));
+				return r;
+			}), 4);
+			const imageRows = imageRowsRaw.filter(Boolean);
+			if (imageRows.length) {
+				await supabase.from('producto_imagenes').insert(imageRows as any[]);
+			}
+			console.timeEnd && console.timeEnd('imagenes-total');
+			setProgress(prev => prev < 75 ? 75 : prev);
+
+			// 6) Registrar textos de todos los productos en un solo insert
+			console.time && console.time('textos-insert');
+			const allTextRows: any[] = [];
+			items.forEach((it, idx) => {
+				const prodId = productoIds[idx];
+				const texts: Array<any> = (it as any)?.data?.texts || [];
+				texts.forEach((t: any) => {
+					allTextRows.push({
+						producto_id: prodId,
+						contenido: t.content,
+						fuente: t.font,
+						color_relleno: t.fill,
+						tamano_fuente: t.fontSize,
+						left: t.left,
+						top: t.top,
+						escala_x: t.scaleX,
+						escala_y: t.scaleY,
+						angulo: t.angle,
+						ancho: t.width,
+						alto: t.height,
+						origen_x: t.originX,
+						origen_y: t.originY,
+					});
+				});
+			});
+			if (allTextRows.length) await supabase.from('producto_textos').insert(allTextRows);
+			console.timeEnd && console.timeEnd('textos-insert');
+			setProgress(prev => prev < 90 ? 90 : prev);
+
+			// Esperar actualización de pedido si no terminó aún
+			await pedidoUpdatePromise;
+			setProgress(100);
+			console.time && console.timeEnd('checkout-total');
 
 			setMensaje("¡Pedido enviado correctamente!");
 			clear();
@@ -291,6 +337,8 @@ const Checkout = () => {
 			setMensaje("Error al guardar el pedido. Intenta de nuevo.");
 		} finally {
 			setEnviando(false);
+			// Ocultar barra tras un pequeño delay para que el 100% se vea
+			setTimeout(() => setShowProgress(false), 800);
 		}
 	};
 
@@ -352,10 +400,17 @@ const Checkout = () => {
 					</div>
 					{ubicacion && (<div className="text-xs mt-2 text-muted-foreground">Lat: {ubicacion.lat.toFixed(6)}, Lng: {ubicacion.lng.toFixed(6)}</div>)}
 				</div>
-				<button type="submit" disabled={enviando} className="btn-hero-static text-sm px-3 py-2 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400">
-					<span className="material-icons" style={{ fontSize: '1.1em' }} aria-hidden="true"></span>
-					{enviando ? "Enviando..." : "Continuar"}
-				</button>
+				<div className="relative w-full">
+					<button type="submit" disabled={enviando} className="btn-hero-static text-sm px-3 py-2 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400">
+						<span className="material-icons" style={{ fontSize: '1.1em' }} aria-hidden="true"></span>
+						{enviando ? (progress < 100 ? `Procesando (${progress}%)` : 'Finalizando...') : "Continuar"}
+					</button>
+					{showProgress && (
+						<div className="mt-2 h-2 w-full bg-zinc-700/40 rounded overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Progreso del pedido">
+							<div className="h-full transition-all duration-200" style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#22d3ee,#a78bfa)' }} />
+						</div>
+					)}
+				</div>
 				{mensaje && <div className="text-green-600 font-semibold mt-2" role="status" aria-live="polite">{mensaje}</div>}
 			</form>
 		</div>
