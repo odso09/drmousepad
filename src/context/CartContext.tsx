@@ -96,7 +96,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const addItem: CartContextValue["addItem"] = (item) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    setItems((prev) => [...prev, { id, quantity: item.quantity, data: item.data }]);
+    setItems((prev) => [
+      ...prev,
+      { id, quantity: item.quantity, data: item.data, canvasJson: (item as any).canvasJson },
+    ]);
   };
 
   const removeItem = (id: string) => {

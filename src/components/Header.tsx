@@ -21,6 +21,7 @@ export const Header = () => {
   <nav className="flex items-center gap-10">
           <NavLink to="/" className="text-foreground/80 hover:text-primary text-base md:text-lg">Inicio</NavLink>
           <NavLink to="/personalizar" className="text-foreground/80 hover:text-primary text-base md:text-lg">Personalizar</NavLink>
+          <NavLink to="/admin" className="text-foreground/80 hover:text-primary text-base md:text-lg">Admin</NavLink>
           <Button asChild variant="secondary" className="relative h-12 w-12 flex items-center justify-center !bg-[linear-gradient(135deg,#0a2236_0%,#1a2636_60%,#232b36_100%)] !border-none">
             <Link to="/carrito" aria-label="Abrir carrito">
               <CartSimpleIcon className="h-9 w-9" />

@@ -563,9 +563,54 @@ export default function PersonalizarPage() {
 
   const handleAddToCart = async () => {
     if (!fabricCanvas) return;
-    // Exportar thumbnail comprimido
-    const dataUrl = (fabricCanvas as any).toDataURL({ format: 'jpeg', quality: 0.7 });
-    const canvasJson = fabricCanvas.toJSON();
+    // Exportar thumbnail de mejor calidad (PNG escalado) para vista normal
+    let dataUrl: string;
+    try {
+      dataUrl = (fabricCanvas as any).toDataURL({ format: 'png', multiplier: 2 });
+    } catch {
+      // Fallback simple
+      dataUrl = (fabricCanvas as any).toDataURL({ format: 'png' });
+    }
+
+    // Generar JSON y luego incrustar las imágenes como dataURL para evitar pérdida (blob: expirados)
+    const canvasJson: any = fabricCanvas.toJSON();
+    try {
+      const imageObjs = fabricCanvas.getObjects().filter(o => o.type === 'image') as any[];
+      const dataUrls: string[] = [];
+      for (const img of imageObjs) {
+        const el: HTMLImageElement | undefined = (img as any)._element;
+        if (!el) { dataUrls.push(''); continue; }
+        const src: string = el.src || '';
+        // Mantener logo por URL original para no duplicar peso
+        if (src === LOGO_URL) { dataUrls.push(src); continue; }
+        // Crear un canvas temporal del tamaño natural para preservar resolución original
+        const w = el.naturalWidth || el.width;
+        const h = el.naturalHeight || el.height;
+        if (!w || !h) { dataUrls.push(src); continue; }
+        const off = document.createElement('canvas');
+        off.width = w; off.height = h;
+        const ctx = off.getContext('2d');
+        if (!ctx) { dataUrls.push(src); continue; }
+        ctx.drawImage(el, 0, 0, w, h);
+        try {
+          const embedded = off.toDataURL('image/png');
+          dataUrls.push(embedded);
+        } catch {
+          dataUrls.push(src);
+        }
+      }
+      // Reemplazar en el JSON (orden coincide con getObjects serializables)
+      let imgIndex = 0;
+      for (const obj of canvasJson.objects || []) {
+        if (obj.type === 'image') {
+          const newSrc = dataUrls[imgIndex];
+          if (newSrc) obj.src = newSrc; // incrustar
+          imgIndex++;
+        }
+      }
+    } catch {
+      // Silencioso: si falla, se mantiene JSON original (podría contener blob: urls y fallar luego en alta res)
+    }
     // Guardar solo imágenes personalizadas (excluyendo el logo)
     const canvasImages = fabricCanvas.getObjects().filter(o => o.type === 'image') as any[];
     // For each canvas image: if it originated from our IDB (we don't embed url), we keep its id; otherwise, fallback to url
