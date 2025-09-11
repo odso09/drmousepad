@@ -343,7 +343,19 @@ const Checkout = () => {
 	};
 
 	return (
-		<div className="max-w-md mx-auto p-4">
+		<div className="max-w-md mx-auto p-4 relative">
+			{showProgress && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Generando pedido">
+					<div className="w-full max-w-sm mx-auto px-6 py-6 rounded-xl bg-zinc-900/80 border border-zinc-700 shadow-xl">
+						<h2 className="text-lg font-semibold mb-4 text-center">Generando pedido</h2>
+						<p className="text-xs text-center text-zinc-400 mb-4">Estamos guardando tu diseño. No cierres esta ventana.</p>
+						<div className="h-3 w-full bg-zinc-700/40 rounded-full overflow-hidden mb-2" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+							<div className="h-full animate-pulse" style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#22d3ee,#a78bfa)' }} />
+						</div>
+						<div className="text-[10px] tracking-wide text-center text-zinc-500">{progress}%</div>
+					</div>
+				</div>
+			)}
 			<h1
 				className="text-2xl font-bold mb-4"
 				style={{
@@ -400,17 +412,10 @@ const Checkout = () => {
 					</div>
 					{ubicacion && (<div className="text-xs mt-2 text-muted-foreground">Lat: {ubicacion.lat.toFixed(6)}, Lng: {ubicacion.lng.toFixed(6)}</div>)}
 				</div>
-				<div className="relative w-full">
-					<button type="submit" disabled={enviando} className="btn-hero-static text-sm px-3 py-2 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400">
-						<span className="material-icons" style={{ fontSize: '1.1em' }} aria-hidden="true"></span>
-						{enviando ? (progress < 100 ? `Procesando (${progress}%)` : 'Finalizando...') : "Continuar"}
-					</button>
-					{showProgress && (
-						<div className="mt-2 h-2 w-full bg-zinc-700/40 rounded overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Progreso del pedido">
-							<div className="h-full transition-all duration-200" style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#22d3ee,#a78bfa)' }} />
-						</div>
-					)}
-				</div>
+				<button type="submit" disabled={enviando} className="btn-hero-static text-sm px-3 py-2 w-full flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400">
+					<span className="material-icons" style={{ fontSize: '1.1em' }} aria-hidden="true"></span>
+					{enviando ? (progress < 100 ? `Generando pedido...` : 'Finalizando...') : "Continuar"}
+				</button>
 				{mensaje && <div className="text-green-600 font-semibold mt-2" role="status" aria-live="polite">{mensaje}</div>}
 			</form>
 		</div>
