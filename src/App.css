@@ -62,3 +62,37 @@
 .read-the-docs {
   color: #888;
 }
+
+/* ===== Progreso Checkout Animaciones ===== */
+@keyframes shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes pulseBox {
+  0%,100% { transform: scale(1); box-shadow: 0 0 0 rgba(34,211,238,0.05); }
+  50% { transform: scale(.985); box-shadow: 0 0 20px rgba(167,139,250,0.15); }
+}
+@keyframes thinBar {
+  0% { transform: translateX(-60%); }
+  100% { transform: translateX(160%); }
+}
+.progress-card-anim {
+  animation: pulseBox 2.4s ease-in-out infinite;
+}
+.progress-shimmer {
+  background: linear-gradient(110deg, rgba(34,211,238,0.15) 0%, rgba(167,139,250,0.35) 40%, rgba(34,211,238,0.15) 80%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+.progress-indeterminate {
+  position: relative;
+}
+.progress-indeterminate::after {
+  content: "";
+  position: absolute;
+  top:0; left:0; bottom:0; width:40%;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%);
+  animation: thinBar 1.3s ease-in-out infinite;
+  border-radius: inherit;
+  mix-blend-mode: screen;
+}

@@ -39,6 +39,7 @@ const Checkout = () => {
 	const [suggestions, setSuggestions] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
 	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [loadingAddr, setLoadingAddr] = useState(false);
+	const [phase, setPhase] = useState('Preparando datos');
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		setForm({ ...form, [e.target.name]: e.target.value });
@@ -159,8 +160,7 @@ const Checkout = () => {
 				return;
 			}
 
-			console.time && console.time('checkout-total');
-			console.time && console.time('pedido-insert');
+
 			// 1) Insertar pedido y obtener su id
 			const pedidoRes = await supabase
 				.from('pedidos')
@@ -184,10 +184,11 @@ const Checkout = () => {
 				.single();
 			if (pedidoRes.error) throw pedidoRes.error;
 			const pedidoId: string = pedidoRes.data.id;
-			console.timeEnd && console.timeEnd('pedido-insert');
-			setProgress(15);
 
-			console.time && console.time('thumb-upload');
+			setProgress(15);
+			setPhase('Creando pedido');
+
+
 			// 2) Subir imagen final del primer item
 			let publicUrl: string | null = null;
 			const first = items[0];
@@ -204,14 +205,15 @@ const Checkout = () => {
 					publicUrl = null;
 				}
 			}
-			console.timeEnd && console.timeEnd('thumb-upload');
+
 			setProgress(prev => prev < 30 ? 30 : prev);
+			setPhase('Generando vista previa');
 
 			// 3) Actualizar pedido con URL final y canvas_json (no bloquear pasos siguientes con espera larga)
 			const canvasJson = (first as any)?.canvasJson ?? null;
 			const pedidoUpdatePromise = supabase.from('pedidos').update({ url_imagen_final: publicUrl, canvas_json: canvasJson }).eq('id', pedidoId);
 
-			console.time && console.time('productos-insert');
+
 			// 4) Insertar productos
 			const productosPayload = items.map((i) => ({
 				pedido_id: pedidoId,
@@ -227,11 +229,12 @@ const Checkout = () => {
 			const prodInsert = await supabase.from('pedido_productos').insert(productosPayload).select('id');
 			if (prodInsert.error) throw prodInsert.error;
 			const productoIds: string[] = (prodInsert.data as any[]).map(r => r.id);
-			console.timeEnd && console.timeEnd('productos-insert');
+
 			setProgress(prev => prev < 45 ? 45 : prev);
+			setPhase('Registrando productos');
 
 			// 5) Subir imágenes y recolectar filas en paralelo (con límite de concurrencia)
-			console.time && console.time('imagenes-total');
+
 			const allImageTasks: Array<() => Promise<any | null>> = [];
 			items.forEach((it, idx) => {
 				const prodId = productoIds[idx];
@@ -283,6 +286,7 @@ const Checkout = () => {
 
 			let completedImages = 0;
 			const totalImages = allImageTasks.length || 1;
+			setPhase('Subiendo imágenes');
 			const imageRowsRaw = await runLimited(allImageTasks.map(t => async () => {
 				const r = await t();
 				completedImages++;
@@ -294,11 +298,12 @@ const Checkout = () => {
 			if (imageRows.length) {
 				await supabase.from('producto_imagenes').insert(imageRows as any[]);
 			}
-			console.timeEnd && console.timeEnd('imagenes-total');
+
 			setProgress(prev => prev < 75 ? 75 : prev);
+			setPhase('Guardando textos');
 
 			// 6) Registrar textos de todos los productos en un solo insert
-			console.time && console.time('textos-insert');
+
 			const allTextRows: any[] = [];
 			items.forEach((it, idx) => {
 				const prodId = productoIds[idx];
@@ -323,13 +328,15 @@ const Checkout = () => {
 				});
 			});
 			if (allTextRows.length) await supabase.from('producto_textos').insert(allTextRows);
-			console.timeEnd && console.timeEnd('textos-insert');
+
 			setProgress(prev => prev < 90 ? 90 : prev);
+			setPhase('Actualizando pedido');
 
 			// Esperar actualización de pedido si no terminó aún
 			await pedidoUpdatePromise;
 			setProgress(100);
-			console.time && console.timeEnd('checkout-total');
+			setPhase('Finalizando');
+
 
 			setMensaje("¡Pedido enviado correctamente!");
 			clear();
@@ -346,13 +353,16 @@ const Checkout = () => {
 		<div className="max-w-md mx-auto p-4 relative">
 			{showProgress && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Generando pedido">
-					<div className="w-full max-w-sm mx-auto px-6 py-6 rounded-xl bg-zinc-900/80 border border-zinc-700 shadow-xl">
-						<h2 className="text-lg font-semibold mb-4 text-center">Generando pedido</h2>
-						<p className="text-xs text-center text-zinc-400 mb-4">Estamos guardando tu diseño. No cierres esta ventana.</p>
-						<div className="h-3 w-full bg-zinc-700/40 rounded-full overflow-hidden mb-2" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-							<div className="h-full animate-pulse" style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#22d3ee,#a78bfa)' }} />
+					<div className="w-full max-w-sm mx-auto px-6 py-6 rounded-xl bg-zinc-900/80 border border-zinc-700 shadow-xl progress-card-anim">
+						<h2 className="text-lg font-semibold mb-1 text-center">Generando pedido</h2>
+						<p className="text-[11px] text-center text-zinc-400 mb-4">{phase}</p>
+						<div className="h-3 w-full bg-zinc-800/60 rounded-full overflow-hidden mb-2 relative" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+							<div className={`h-full transition-all duration-200 ${progress < 18 ? 'progress-indeterminate' : 'progress-shimmer'}`} style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#22d3ee,#a78bfa)' }} />
 						</div>
-						<div className="text-[10px] tracking-wide text-center text-zinc-500">{progress}%</div>
+						<div className="flex items-center justify-between text-[10px] text-zinc-500">
+							<span>{progress < 100 ? `${progress}%` : 'Completado'}</span>
+							<span>{progress < 100 ? phase : 'Listo'}</span>
+						</div>
 					</div>
 				</div>
 			)}
