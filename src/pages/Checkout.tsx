@@ -189,29 +189,35 @@ const Checkout = () => {
 			setPhase('Creando pedido');
 
 
-			// 2) Subir imagen final del primer item
-			let publicUrl: string | null = null;
+			// 2) Subir imagen final del primer item en paralelo (no bloquear resto)
 			const first = items[0];
 			const thumb = (first?.data as any)?.thumbnail as string | undefined;
-			if (thumb && thumb.startsWith('data:')) {
-				try {
-					const blob = await dataUrlToBlob(thumb);
-					const path = `pedidos/${pedidoId}/final.png`;
-					const { error: upErr } = await supabase.storage.from('designs').upload(path, blob, { contentType: 'image/png', upsert: true });
-					if (upErr) throw upErr;
-					const { data } = supabase.storage.from('designs').getPublicUrl(path);
-					publicUrl = data?.publicUrl ?? null;
-				} catch {
-					publicUrl = null;
-				}
-			}
-
-			setProgress(prev => prev < 30 ? 30 : prev);
-			setPhase('Generando vista previa');
-
-			// 3) Actualizar pedido con URL final y canvas_json (no bloquear pasos siguientes con espera larga)
 			const canvasJson = (first as any)?.canvasJson ?? null;
-			const pedidoUpdatePromise = supabase.from('pedidos').update({ url_imagen_final: publicUrl, canvas_json: canvasJson }).eq('id', pedidoId);
+			const thumbUploadPromise = (async () => {
+				if (thumb && thumb.startsWith('data:')) {
+					try {
+						const blob = await dataUrlToBlob(thumb);
+						const path = `pedidos/${pedidoId}/final.png`;
+						const { error: upErr } = await supabase.storage.from('designs').upload(path, blob, { contentType: 'image/png', upsert: true });
+						if (upErr) throw upErr;
+						const { data } = supabase.storage.from('designs').getPublicUrl(path);
+						return data?.publicUrl ?? null;
+					} catch {
+						return null;
+					}
+				}
+				return null;
+			})().then(url => {
+				// Ajustar progreso si aún bajo cuando termina el upload
+				setProgress(p => p < 30 ? 30 : p);
+				return url;
+			});
+
+			setPhase('Generando vista previa');
+			// 3) Programar actualización del pedido cuando termine el upload
+			const pedidoUpdatePromise = thumbUploadPromise.then(url =>
+				supabase.from('pedidos').update({ url_imagen_final: url, canvas_json: canvasJson }).eq('id', pedidoId)
+			);
 
 
 			// 4) Insertar productos
