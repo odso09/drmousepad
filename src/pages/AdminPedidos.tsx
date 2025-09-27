@@ -25,32 +25,43 @@ const sizeToPixels = (tamano?: string): { w: number; h: number } => {
 	return map[tamano] || { w: 3840, h: 1920 };
 };
 
-// Renderizador de alta resolución a partir de canvas_json (usando multiplier)
+// Renderizador de alta resolución a partir de canvas_json (usando multiplier con fallback)
 async function renderHighRes(rawJson: any, tamano?: string): Promise<Blob> {
-	const fabricNs = await import('fabric');
+		const fabricMod: any = await import('fabric');
+		const fabric = (fabricMod?.fabric) || fabricMod;
 	const canvasJson = JSON.parse(JSON.stringify(rawJson || {})); // copia defensiva
 	const TRANSPARENT_PIXEL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP4BwQACfsD/qBDnV8AAAAASUVORK5CYII=';
 
-	// Reparar imágenes con blob: expirado sustituyéndolas por pixel transparente (evita fallo total)
-	if (Array.isArray(canvasJson?.objects)) {
-		for (const obj of canvasJson.objects) {
-			if (obj.type === 'image' && typeof obj.src === 'string' && obj.src.startsWith('blob:')) {
+	if (!canvasJson || !canvasJson.objects) throw new Error('canvas_json inválido');
+
+	// Reparar imágenes blob: expiradas / vacías
+	for (const obj of (canvasJson.objects || [])) {
+		if (obj.type === 'image' && typeof obj.src === 'string') {
+			if (obj.src.startsWith('blob:') || obj.src === '' || obj.src === null) {
 				obj.src = TRANSPARENT_PIXEL;
 			}
+			// Asegurar crossOrigin para evitar tainted canvas en export
+			obj.crossOrigin = 'anonymous';
 		}
 	}
 
-	// Detectar dimensiones originales del canvas
-	const origW = canvasJson?.width || canvasJson?.w ||  (canvasJson?.objects?.length ? Math.max(...canvasJson.objects.filter((o:any)=>o.left!=null && o.width!=null).map((o:any)=> (o.left||0) + (o.width||0))) : 960) || 960;
-	const origH = canvasJson?.height || canvasJson?.h ||  (canvasJson?.objects?.length ? Math.max(...canvasJson.objects.filter((o:any)=>o.top!=null && o.height!=null).map((o:any)=> (o.top||0) + (o.height||0))) : 480) || 480;
+	// Dimensiones originales
+	const origW = canvasJson.width || canvasJson.w ||  (canvasJson.objects?.length
+		? Math.max(...canvasJson.objects.filter((o: any) => o?.left != null && o?.width != null).map((o: any) => (o.left || 0) + (o.width || 0)))
+		: 960) || 960;
+	const origH = canvasJson.height || canvasJson.h ||  (canvasJson.objects?.length
+		? Math.max(...canvasJson.objects.filter((o: any) => o?.top != null && o?.height != null).map((o: any) => (o.top || 0) + (o.height || 0)))
+		: 480) || 480;
 
 	const target = sizeToPixels(tamano);
-	const mult = Math.min( Math.max( (target.w / origW), 2), 8 ); // mínimo 2x, máximo 8x por seguridad
+	let desiredMult = Math.min(Math.max(target.w / origW, 2), 8); // 2x–8x
 
-	const canvas = new fabricNs.Canvas(undefined as any, {
+	// Crear canvas offscreen explícito
+	const el = document.createElement('canvas');
+	const canvas = new fabric.Canvas(el, {
 		width: origW,
 		height: origH,
-		backgroundColor: (canvasJson?.backgroundColor || canvasJson?.background) ?? '#000',
+		backgroundColor: (canvasJson.backgroundColor || canvasJson.background) ?? '#000',
 		imageSmoothingEnabled: true,
 		imageSmoothingQuality: 'high'
 	} as any);
@@ -61,14 +72,27 @@ async function renderHighRes(rawJson: any, tamano?: string): Promise<Blob> {
 		} catch (e) { reject(e); }
 	});
 
-	canvas.getObjects().forEach((o: any) => { if (o.type === 'image') o.objectCaching = true; });
+	// Optimizar objetos imagen
+	canvas.getObjects().forEach((o: any) => {
+		if (o.type === 'image') {
+			o.objectCaching = true;
+		}
+	});
 	canvas.renderAll();
 
-	// Exportar con multiplier calculado
-	let dataUrl: string;
-	try {
-		dataUrl = (canvas as any).toDataURL({ format: 'png', multiplier: mult });
-	} catch {
+	// Intentar exportar con fallback reduciendo multiplier si falla (memoria)
+	let mult = desiredMult;
+	let dataUrl: string | null = null;
+	while (mult >= 2 && !dataUrl) {
+		try {
+			dataUrl = (canvas as any).toDataURL({ format: 'png', multiplier: mult });
+		} catch (e) {
+			mult = mult > 6 ? 6 : mult > 4 ? 4 : mult > 3 ? 3 : Math.floor(mult - 1);
+			if (mult < 2) break;
+		}
+	}
+	if (!dataUrl) {
+		// último intento sin multiplier
 		dataUrl = (canvas as any).toDataURL({ format: 'png' });
 	}
 	const resp = await fetch(dataUrl);

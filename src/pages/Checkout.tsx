@@ -152,6 +152,9 @@ const Checkout = () => {
 		setMensaje("");
 		setShowProgress(true);
 		setProgress(5);
+		// Debug timings toggle: enabled in dev or when localStorage.debugCheckout === '1'
+		const DEBUG = (typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) || localStorage.getItem('debugCheckout') === '1';
+		const ts: any = { start: performance.now() };
 		try {
 			if (!items || items.length === 0) {
 				setMensaje("Tu carrito está vacío.");
@@ -162,6 +165,7 @@ const Checkout = () => {
 
 
 			// 1) Insertar pedido y obtener su id
+			ts.pedidoStart = performance.now();
 			const pedidoRes = await supabase
 				.from('pedidos')
 				.insert([
@@ -184,6 +188,7 @@ const Checkout = () => {
 				.single();
 			if (pedidoRes.error) throw pedidoRes.error;
 			const pedidoId: string = pedidoRes.data.id;
+			ts.pedidoEnd = performance.now();
 
 			setProgress(15);
 			setPhase('Creando pedido');
@@ -193,6 +198,7 @@ const Checkout = () => {
 			const first = items[0];
 			const thumb = (first?.data as any)?.thumbnail as string | undefined;
 			const canvasJson = (first as any)?.canvasJson ?? null;
+			ts.thumbStart = performance.now();
 			const thumbUploadPromise = (async () => {
 				if (thumb && thumb.startsWith('data:')) {
 					try {
@@ -208,6 +214,7 @@ const Checkout = () => {
 				}
 				return null;
 			})().then(url => {
+				ts.thumbEnd = performance.now();
 				// Ajustar progreso si aún bajo cuando termina el upload
 				setProgress(p => p < 30 ? 30 : p);
 				return url;
@@ -221,6 +228,7 @@ const Checkout = () => {
 
 
 			// 4) Insertar productos
+			ts.productosStart = performance.now();
 			const productosPayload = items.map((i) => ({
 				pedido_id: pedidoId,
 				tamano: (i.data as any)?.size ?? null,
@@ -235,11 +243,13 @@ const Checkout = () => {
 			const prodInsert = await supabase.from('pedido_productos').insert(productosPayload).select('id');
 			if (prodInsert.error) throw prodInsert.error;
 			const productoIds: string[] = (prodInsert.data as any[]).map(r => r.id);
+			ts.productosEnd = performance.now();
 
 			setProgress(prev => prev < 45 ? 45 : prev);
 			setPhase('Registrando productos');
 
 			// 5) Subir imágenes y recolectar filas en paralelo (con límite de concurrencia)
+			ts.imagenesStart = performance.now();
 
 			const allImageTasks: Array<() => Promise<any | null>> = [];
 			items.forEach((it, idx) => {
@@ -304,11 +314,13 @@ const Checkout = () => {
 			if (imageRows.length) {
 				await supabase.from('producto_imagenes').insert(imageRows as any[]);
 			}
+			ts.imagenesEnd = performance.now();
 
 			setProgress(prev => prev < 75 ? 75 : prev);
 			setPhase('Guardando textos');
 
 			// 6) Registrar textos de todos los productos en un solo insert
+			ts.textosStart = performance.now();
 
 			const allTextRows: any[] = [];
 			items.forEach((it, idx) => {
@@ -334,14 +346,31 @@ const Checkout = () => {
 				});
 			});
 			if (allTextRows.length) await supabase.from('producto_textos').insert(allTextRows);
+			ts.textosEnd = performance.now();
 
 			setProgress(prev => prev < 90 ? 90 : prev);
 			setPhase('Actualizando pedido');
 
 			// Esperar actualización de pedido si no terminó aún
+			ts.pedidoUpdateStart = performance.now();
 			await pedidoUpdatePromise;
 			setProgress(100);
 			setPhase('Finalizando');
+			ts.pedidoUpdateEnd = performance.now();
+			ts.end = performance.now();
+			if (DEBUG) {
+				const toMs = (a: number, b: number) => (a && b ? (b - a) : 0).toFixed(2) + ' ms';
+				// Consola resumida
+				console.groupCollapsed('[checkout] timings');
+				console.log('pedido-insert:', toMs(ts.pedidoStart, ts.pedidoEnd));
+				console.log('thumb-upload:', toMs(ts.thumbStart, ts.thumbEnd));
+				console.log('productos-insert:', toMs(ts.productosStart, ts.productosEnd));
+				console.log('imagenes-total:', toMs(ts.imagenesStart, ts.imagenesEnd));
+				console.log('textos-insert:', toMs(ts.textosStart, ts.textosEnd));
+				console.log('pedido-update:', toMs(ts.pedidoUpdateStart, ts.pedidoUpdateEnd));
+				console.log('checkout-total:', toMs(ts.start, ts.end));
+				console.groupEnd();
+			}
 
 
 			setMensaje("¡Pedido enviado correctamente!");
