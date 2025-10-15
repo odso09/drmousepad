@@ -381,9 +381,14 @@ const Checkout = () => {
 		// Exportar SIN multiplier porque el canvas ya está escalado
 		let dataUrl: string;
 		try {
-			// Usar PNG para mantener 100% de calidad sin ninguna pérdida (lossless)
-			dataUrl = (canvas as any).toDataURL({ format: 'png' });
-			console.log('✅ DataURL generado con éxito (PNG sin pérdida), tamaño:', dataUrl.length);
+			// OPCIÓN 1: PNG sin pérdida (~17MB, 100% calidad, upload lento ~43s)
+			//dataUrl = (canvas as any).toDataURL({ format: 'png' });
+			//console.log('✅ DataURL generado con éxito (PNG sin pérdida), tamaño:', dataUrl.length);
+
+			// OPCIÓN 2: JPEG 95% (~5MB, 99.5% calidad, upload rápido ~13s)
+			// Descomenta las siguientes 2 líneas y comenta las 2 de arriba para usar JPEG:
+			dataUrl = (canvas as any).toDataURL({ format: 'jpeg', quality: 0.95 });
+			console.log('✅ DataURL generado con éxito (JPEG 95%), tamaño:', dataUrl.length);
 		} catch (err) {
 			console.error('❌ Error generando dataURL:', err);
 			throw err;
@@ -529,7 +534,8 @@ const Checkout = () => {
 				}
 			}
 			
-			// Actualizar producto solo con la url_imagen_final (canvas_json ya está desde el INSERT)
+			// Actualizar producto solo con la url_imagen_final
+			// El canvas_json NO se guarda en la DB para evitar error 500 (permanece en IndexedDB)
 			const prodId = productoIds[idx];
 			try {
 				const { error: updateErr } = await supabase
@@ -674,11 +680,13 @@ const Checkout = () => {
 
 			// Ya no se espera actualización de pedido, ya se actualizó arriba
 			setProgress(100);
-			setPhase('Finalizando');
+			setPhase('¡Pedido generado con éxito! ✓');
 
-
-			setMensaje("¡Pedido enviado correctamente!");
-			clear();
+			// Mostrar mensaje de éxito
+			setTimeout(() => {
+				setMensaje("¡Pedido enviado correctamente!");
+				clear();
+			}, 500);
 			
 			const endTime = performance.now();
 			console.log(`⏱️ ✅ PROCESO COMPLETO: ${(endTime - startTime).toFixed(0)}ms (${((endTime - startTime) / 1000).toFixed(2)}s)`);
