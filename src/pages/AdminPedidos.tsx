@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { sizeToPixels } from "@/lib/mousepadSizes";
 
 type Producto = {
 	id: number;
@@ -15,19 +16,6 @@ type Pedido = {
 	nombre_cliente: string;
 	email_cliente: string;
 	productos: Producto[];
-};
-
-// Mapeo de tamaños a píxeles para exportación de alta resolución (aprox a 300 DPI sobre un lado)
-const sizeToPixels = (tamano?: string): { w: number; h: number } => {
-	if (!tamano) return { w: 3840, h: 1920 };
-	const map: Record<string, { w: number; h: number }> = {
-		"90×40 cm": { w: 10630, h: 4724 },
-		"80×40 cm": { w: 9449, h: 4724 },
-		"80×30 cm": { w: 9449, h: 3543 },
-		"70×30 cm": { w: 8268, h: 3543 },
-		"60×30 cm": { w: 7087, h: 3543 },
-	};
-	return map[tamano] || { w: 3840, h: 1920 };
 };
 
 // Renderizador de alta resolución a partir de canvas_json (usando multiplier)

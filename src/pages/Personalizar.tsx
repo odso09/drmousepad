@@ -18,54 +18,11 @@ import { ColorPicker } from "@/components/ui/color-picker";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import { deleteImageBlob, getImageBlob, saveImageBlob } from "@/lib/idb";
+import { SIZES, parseSize } from "@/lib/mousepadSizes";
+import { PRICING } from "@/lib/pricing";
+import { AVAILABLE_FONTS } from "@/lib/fonts";
 
-const SIZES = ["90×40 cm", "80×40 cm", "80×30 cm", "70×30 cm", "60×30 cm"] as const;
 const DEFAULT_SIZE = "90×40 cm" as const;
-
-const FONTS = [
-  { label: "Oxanium (Gamer)", value: "Oxanium, sans-serif" },
-  { label: "Orbitron (Tech)", value: "Orbitron, sans-serif" },
-  { label: "Audiowide (Display)", value: "Audiowide, cursive" },
-  { label: "Press Start 2P (Retro)", value: '"Press Start 2P", cursive' },
-  { label: "Rajdhani (Display)", value: "Rajdhani, sans-serif" },
-  { label: "Exo 2", value: '"Exo 2", sans-serif' },
-  { label: "Barlow", value: "Barlow, sans-serif" },
-  { label: "Montserrat", value: "Montserrat, sans-serif" },
-  { label: "Teko", value: "Teko, sans-serif" },
-  { label: "Anton", value: "Anton, sans-serif" },
-  { label: "Roboto", value: "Roboto, sans-serif" },
-  { label: "Lato", value: "Lato, sans-serif" },
-  { label: "Oswald", value: "Oswald, sans-serif" },
-  { label: "Bebas Neue", value: '"Bebas Neue", cursive' },
-  { label: "Poppins", value: "Poppins, sans-serif" },
-  { label: "Fira Sans", value: '"Fira Sans", sans-serif' },
-  { label: "Rubik", value: "Rubik, sans-serif" },
-  { label: "Russo One (Gamer)", value: '"Russo One", sans-serif' },
-  { label: "VT323 (Retro)", value: '"VT323", monospace' },
-  { label: "Share Tech Mono", value: '"Share Tech Mono", monospace' },
-  { label: "Bangers (Cómic)", value: '"Bangers", cursive' },
-  { label: "Permanent Marker", value: '"Permanent Marker", cursive' },
-  { label: "Luckiest Guy", value: '"Luckiest Guy", cursive' },
-  { label: "Archivo Black", value: '"Archivo Black", sans-serif' },
-  { label: "Chakra Petch", value: '"Chakra Petch", sans-serif' },
-  { label: "Titillium Web", value: '"Titillium Web", sans-serif' },
-  { label: "Unica One", value: '"Unica One", cursive' },
-  { label: "Syncopate", value: '"Syncopate", sans-serif' },
-  { label: "Saira", value: '"Saira", sans-serif' },
-  { label: "Coda Caption", value: '"Coda Caption", sans-serif' },
-  { label: "Black Ops One", value: '"Black Ops One", cursive' },
-  { label: "Staatliches", value: '"Staatliches", cursive' },
-  { label: "Barlow Condensed", value: '"Barlow Condensed", sans-serif' },
-];
-
-const BASE_PRICE = 200_000;
-const EXTRA_LOGO = 30_000;
-const EXTRA_RGB = 50_000;
-
-const parseSize = (s: string) => {
-  const [w, h] = s.replace(" cm", "").split("×").map((n) => parseInt(n));
-  return { w, h };
-};
 
 export default function PersonalizarPage() {
   // URL del logo para filtrar imágenes personalizadas
@@ -98,7 +55,7 @@ export default function PersonalizarPage() {
     originX?: string;
     originY?: string;
   }>>([]);
-  const [activeFont, setActiveFont] = useState(FONTS[0].value);
+  const [activeFont, setActiveFont] = useState<string>(AVAILABLE_FONTS[0].value);
   const [logoObj, setLogoObj] = useState<FabricObject | null>(null);
   // Estado para múltiples imágenes subidas
   // For each image we now store an id (IndexedDB key) and optional props; keep url for backward compatibility when restoring
@@ -542,7 +499,7 @@ export default function PersonalizarPage() {
   }, [logoPos]);
 
   const textCount = texts.length;
-  const total = BASE_PRICE + (logoRemoved ? EXTRA_LOGO : 0) + (rgb ? EXTRA_RGB : 0);
+  const total = PRICING.BASE_PRICE + (logoRemoved ? PRICING.EXTRA_LOGO : 0) + (rgb ? PRICING.EXTRA_RGB : 0);
   
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
@@ -731,7 +688,7 @@ export default function PersonalizarPage() {
         logo: { position: logoPos, removed: logoRemoved },
         rgb,
   backgroundColor,
-        basePrice: BASE_PRICE,
+        basePrice: PRICING.BASE_PRICE,
         extras: { logoRemoved, rgb },
         total,
         thumbnail: dataUrl,
@@ -1084,7 +1041,7 @@ export default function PersonalizarPage() {
                     <SelectValue placeholder="Fuente" />
                   </SelectTrigger>
                   <SelectContent>
-                    {FONTS.map((f) => (
+                    {AVAILABLE_FONTS.map((f) => (
                       <SelectItem key={f.value} value={f.value}>
                         <span style={{ fontFamily: f.value }}>{f.label}</span>
                       </SelectItem>
@@ -1190,12 +1147,12 @@ export default function PersonalizarPage() {
           </li>
         </ul>
         <hr className="my-2 border-border" />
-        <div className="mb-2 flex justify-between text-sm"><span>Precio base:</span><span>{BASE_PRICE.toLocaleString()} Gs</span></div>
+        <div className="mb-2 flex justify-between text-sm"><span>Precio base:</span><span>{PRICING.BASE_PRICE.toLocaleString()} Gs</span></div>
         {logoRemoved && (
-          <div className="mb-2 flex justify-between text-sm"><span>Quitar logo:</span><span>+{EXTRA_LOGO.toLocaleString()} Gs</span></div>
+          <div className="mb-2 flex justify-between text-sm"><span>Quitar logo:</span><span>+{PRICING.EXTRA_LOGO.toLocaleString()} Gs</span></div>
         )}
         {rgb && (
-          <div className="mb-2 flex justify-between text-sm"><span>Luces RGB:</span><span>+{EXTRA_RGB.toLocaleString()} Gs</span></div>
+          <div className="mb-2 flex justify-between text-sm"><span>Luces RGB:</span><span>+{PRICING.EXTRA_RGB.toLocaleString()} Gs</span></div>
         )}
   <div className="mb-4 flex justify-between text-lg font-bold"><span style={{color:'#a259f7', fontSize:'1.4rem'}}>Total:</span><span style={{color:'#a259f7', fontWeight:'bold', fontSize:'1.4rem'}}>{total.toLocaleString()} Gs</span></div>
   <Button

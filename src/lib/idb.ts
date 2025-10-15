@@ -117,3 +117,59 @@ export async function clearAllCanvas(): Promise<void> {
     req.onerror = () => reject(req.error);
   });
 }
+
+/**
+ * Limpia imágenes antiguas de IndexedDB basándose en la fecha de creación
+ * @param daysOld Número de días para considerar una imagen como antigua (default: 7)
+ */
+export async function cleanOldImages(daysOld: number = 7): Promise<void> {
+  const db = await openDB();
+  const cutoffDate = Date.now() - (daysOld * 24 * 60 * 60 * 1000);
+  
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_IMAGES, 'readwrite');
+    const store = tx.objectStore(STORE_IMAGES);
+    const request = store.openCursor();
+    
+    request.onsuccess = (event: any) => {
+      const cursor = event.target.result;
+      if (cursor) {
+        if (cursor.value.createdAt < cutoffDate) {
+          cursor.delete();
+        }
+        cursor.continue();
+      }
+    };
+    
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+/**
+ * Limpia canvas JSON antiguos de IndexedDB basándose en la fecha de creación
+ * @param daysOld Número de días para considerar un canvas como antiguo (default: 7)
+ */
+export async function cleanOldCanvas(daysOld: number = 7): Promise<void> {
+  const db = await openDB();
+  const cutoffDate = Date.now() - (daysOld * 24 * 60 * 60 * 1000);
+  
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_CANVAS, 'readwrite');
+    const store = tx.objectStore(STORE_CANVAS);
+    const request = store.openCursor();
+    
+    request.onsuccess = (event: any) => {
+      const cursor = event.target.result;
+      if (cursor) {
+        if (cursor.value.createdAt < cutoffDate) {
+          cursor.delete();
+        }
+        cursor.continue();
+      }
+    };
+    
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}

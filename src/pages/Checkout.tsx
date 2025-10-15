@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/lib/supabaseClient";
 import { getImageBlob } from "@/lib/idb";
+import { sizeToPixels, parseSize } from "@/lib/mousepadSizes";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -132,18 +133,6 @@ const Checkout = () => {
 	}
 
 	// Mapeo de tamaños a píxeles para alta resolución (300 DPI aproximado)
-	const sizeToPixels = (tamano?: string): { w: number; h: number } => {
-		if (!tamano) return { w: 3840, h: 1920 };
-		const map: Record<string, { w: number; h: number }> = {
-			"90×40 cm": { w: 10630, h: 4724 },
-			"80×40 cm": { w: 9449, h: 4724 },
-			"80×30 cm": { w: 9449, h: 3543 },
-			"70×30 cm": { w: 8268, h: 3543 },
-			"60×30 cm": { w: 7087, h: 3543 },
-		};
-		return map[tamano] || { w: 3840, h: 1920 };
-	};
-
 	// Renderizar canvas en alta resolución
 	const renderHighRes = async (canvasJson: any, tamano: string, imageIds: string[]): Promise<Blob> => {
 		const fabricNs = await import('fabric');
@@ -202,10 +191,6 @@ const Checkout = () => {
 		const canvasJsonH = canvasJson?.height || 480;
 		
 		// Calcular proporción correcta según el tamaño de mousepad seleccionado
-		const parseSize = (s: string) => {
-			const [w, h] = s.replace(" cm", "").split("×").map((n) => parseInt(n));
-			return { w, h };
-		};
 		const { w: realW, h: realH } = parseSize(tamano);
 		const correctRatio = realW / realH;
 		
