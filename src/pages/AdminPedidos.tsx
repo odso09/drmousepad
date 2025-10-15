@@ -1,15 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+type Producto = {
+	id: number;
+	tamano: string;
+	url_imagen_final: string | null;
+};
+
 type Pedido = {
-	id: string;
+	id: number;
 	creado_en?: string;
 	nombre_cliente: string;
 	email_cliente: string;
-	url_imagen_final?: string | null;
-	canvas_json?: any;
+	productos: Producto[];
 };
 
 // Mapeo de tamaños a píxeles para exportación de alta resolución (aprox a 300 DPI sobre un lado)
@@ -82,55 +87,49 @@ export default function AdminPedidos() {
 	useEffect(() => {
 		(async () => {
 			setLoading(true);
-			const { data, error } = await supabase.from('pedidos').select('id, creado_en, nombre_cliente, email_cliente, url_imagen_final, canvas_json');
+			const { data, error } = await supabase
+				.from('pedidos')
+				.select('id, creado_en, nombre_cliente, email_cliente, pedido_productos(id, tamano, url_imagen_final)')
+				.order('creado_en', { ascending: false });
 			if (error) {
 				toast.error('No se pudieron cargar los pedidos');
 			} else {
-				setPedidos(data as any);
+				// Mapear productos a un array más limpio
+				const pedidosConProductos = (data as any[]).map((p) => ({
+					id: p.id,
+					creado_en: p.creado_en,
+					nombre_cliente: p.nombre_cliente,
+					email_cliente: p.email_cliente,
+					productos: (p.pedido_productos || []).map((prod: any) => ({
+						id: prod.id,
+						tamano: prod.tamano,
+						url_imagen_final: prod.url_imagen_final,
+					})),
+				}));
+				setPedidos(pedidosConProductos);
 			}
 			setLoading(false);
 		})();
 	}, []);
 
-	const handleDownloadNormal = async (p: Pedido) => {
-		if (!p.url_imagen_final) { toast.info('Sin imagen final'); return; }
+	const handleDownloadImage = async (url: string, productoId: number) => {
 		try {
-			const resp = await fetch(p.url_imagen_final, { cache: 'no-store' });
+			const resp = await fetch(url, { cache: 'no-store' });
 			if (!resp.ok) throw new Error('fetch failed');
 			const blob = await resp.blob();
-			const url = URL.createObjectURL(blob);
+			const objUrl = URL.createObjectURL(blob);
 			const a = document.createElement('a');
-			a.href = url;
-			a.download = `pedido-${p.id}.png`;
+			a.href = objUrl;
+			a.download = `producto-${productoId}.png`;
 			document.body.appendChild(a);
 			a.click();
 			a.remove();
-			URL.revokeObjectURL(url);
+			URL.revokeObjectURL(objUrl);
+			toast.success('Imagen descargada');
 		} catch {
 			// Fallback: abrir en nueva pestaña si no se pudo forzar descarga
-			try {
-				window.open(p.url_imagen_final, '_blank');
-			} catch {}
+			window.open(url, '_blank');
 			toast.error('No se pudo forzar la descarga; se abrió la imagen.');
-		}
-	};
-
-	const handleDownloadHighRes = async (p: Pedido) => {
-		try {
-			if (!p.canvas_json) { toast.info('Sin canvas_json para alta resolución'); return; }
-			const { data: productos } = await supabase.from('pedido_productos').select('tamano').eq('pedido_id', p.id).limit(1);
-			const tamano = productos && productos[0]?.tamano;
-			const blob = await renderHighRes(p.canvas_json, tamano);
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = `pedido-${p.id}-alta.png`;
-			document.body.appendChild(a);
-			a.click();
-			a.remove();
-			URL.revokeObjectURL(url);
-		} catch (e) {
-			toast.error('No se pudo generar alta resolución (revisa si el pedido es antiguo sin imágenes embebidas)');
 		}
 	};
 
@@ -150,24 +149,36 @@ export default function AdminPedidos() {
 			{!loading && pedidos.length === 0 && <p>No hay pedidos.</p>}
 			<div className="space-y-3">
 				{pedidos.map((p) => (
-					<div key={p.id} className="border rounded p-3 flex items-center justify-between gap-4">
-						<div className="flex items-center gap-4 min-w-0">
-							<div className="w-[140px] h-[80px] bg-muted/40 rounded overflow-hidden border">
-								<img
-									loading="lazy"
-									src={p.url_imagen_final || "/placeholder.svg"}
-									alt={`Pedido ${p.id}`}
-									className="w-full h-full object-cover"
-								/>
-							</div>
-							<div className="truncate">
-								<div className="font-semibold truncate">{p.nombre_cliente}</div>
-								<div className="text-sm text-muted-foreground truncate">{p.email_cliente}</div>
-							</div>
+					<div key={p.id} className="border rounded p-3">
+						<div className="flex items-center gap-4 min-w-0 mb-2">
+							<div className="font-semibold truncate">{p.nombre_cliente}</div>
+							<div className="text-sm text-muted-foreground truncate">{p.email_cliente}</div>
 						</div>
-						<div className="flex gap-2">
-							<Button onClick={() => handleDownloadNormal(p)}>Descargar normal</Button>
-							<Button variant="secondary" onClick={() => handleDownloadHighRes(p)}>Descargar alta resolución</Button>
+						<div className="flex flex-wrap gap-4">
+							{p.productos.length === 0 && <span className="text-muted-foreground">Sin productos</span>}
+							{p.productos.map((prod) => (
+								<div key={prod.id} className="border rounded p-2 flex flex-col items-center min-w-[120px]">
+									<div className="w-[100px] h-[60px] bg-muted/40 rounded overflow-hidden border mb-1">
+										<img
+											loading="lazy"
+											src={prod.url_imagen_final || "/placeholder.svg"}
+											alt={`Producto ${prod.id}`}
+											className="w-full h-full object-cover"
+										/>
+									</div>
+									<div className="text-xs font-medium mb-1">{prod.tamano}</div>
+									{prod.url_imagen_final ? (
+										<button
+											onClick={() => handleDownloadImage(prod.url_imagen_final!, prod.id)}
+											className="text-blue-600 hover:underline text-xs cursor-pointer bg-transparent border-none p-0"
+										>
+											Descargar imagen
+										</button>
+									) : (
+										<span className="text-muted-foreground text-xs">Sin imagen</span>
+									)}
+								</div>
+							))}
 						</div>
 					</div>
 				))}

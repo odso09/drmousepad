@@ -1,7 +1,7 @@
 import SEO from "@/components/SEO";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import Checkout from "./Checkout";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -88,6 +88,10 @@ export default function CartPage() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-lg">
+                  <DialogTitle>Finalizar Compra</DialogTitle>
+                  <DialogDescription>
+                    Completa tus datos para confirmar el pedido. Recibirás un email con las instrucciones de pago.
+                  </DialogDescription>
                   <Checkout />
                 </DialogContent>
               </Dialog>

@@ -109,21 +109,6 @@ export default function PersonalizarPage() {
   const restoredOnceRef = useRef(false);
 
   const { addItem, items } = useCart();
-  // Cargar datos si editando
-  // Guardar automáticamente en localStorage al cambiar el estado relevante
-  // Utilidad para limpiar claves si localStorage supera 4MB
-  function clearLargeLocalStorageKeys(limitMB = 4) {
-    let total = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      const value = localStorage.getItem(key);
-      total += new Blob([key + value]).size;
-    }
-    if (total / (1024 * 1024) > limitMB) {
-      // Notificar sin bloquear ni borrar automáticamente
-      toast.warning('Espacio local casi lleno. Considera limpiar la caché desde el carrito.');
-    }
-  }
 
   useEffect(() => {
     const data = {
@@ -137,7 +122,6 @@ export default function PersonalizarPage() {
       backgroundColor,
     };
     localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
-    clearLargeLocalStorageKeys();
   }, [size, rgb, logoRemoved, logoPos, texts, uploadedImages, backgroundColor]);
 
   // Segundo efecto: restaurar desde carrito solo una vez por editId
@@ -181,22 +165,21 @@ export default function PersonalizarPage() {
             const imgProps = typeof ref === 'string' ? {} : (ref.props || {});
             try {
               let src: string | undefined;
-              let createdObjUrl = false;
               if (idVal) {
                 const blob = await getImageBlob(idVal);
                 if (blob) {
-                  src = URL.createObjectURL(blob);
-                  createdObjUrl = true;
+                  // Convertir blob a dataURL para evitar problemas con URLs temporales
+                  src = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(blob);
+                  });
                 }
               }
               if (!src && urlVal) src = urlVal; // legacy fallback
               if (!src) continue;
               // eslint-disable-next-line no-await-in-loop
               const img = await FabricImage.fromURL(src);
-              // Revocar URL blob temporal si fue creada por nosotros
-              if (createdObjUrl) {
-                try { URL.revokeObjectURL(src); } catch {}
-              }
               // Etiquetar la instancia con el id de IndexedDB para limpieza/guardado confiable
               if (idVal) (img as any).__idbId = idVal;
               img.set({
@@ -410,8 +393,8 @@ export default function PersonalizarPage() {
       fill: textColor,
       fontSize: 28,
       editable: true,
-      left: 40,
-      top: 40,
+  left: 40,
+  top: 40,
     } as any);
     fabricCanvas.add(tb);
     // Guardar las props reales del textbox
@@ -423,8 +406,8 @@ export default function PersonalizarPage() {
         font: activeFont,
         fill: typeof tb.fill === 'string' ? tb.fill : '#ffffff',
         fontSize: tb.fontSize,
-        left: tb.left,
-        top: tb.top,
+  left: tb.left,
+  top: tb.top,
         scaleX: tb.scaleX,
         scaleY: tb.scaleY,
         angle: tb.angle,
@@ -455,8 +438,8 @@ export default function PersonalizarPage() {
       const ch = fabricCanvas.height as number;
       const scale = 0.5 * Math.min(cw / (img.width as number), ch / (img.height as number));
       const props = {
-        left: cw / 2,
-        top: ch / 2,
+  left: cw / 2,
+  top: ch / 2,
         scaleX: scale,
         scaleY: scale,
         originX: "center",
@@ -560,21 +543,27 @@ export default function PersonalizarPage() {
 
   const textCount = texts.length;
   const total = BASE_PRICE + (logoRemoved ? EXTRA_LOGO : 0) + (rgb ? EXTRA_RGB : 0);
+  
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const handleAddToCart = async () => {
-    if (!fabricCanvas) return;
-    // Exportar thumbnail adaptativo: calcula multiplier según la imagen de mayor resolución
-    // Objetivo: conservar detalle sin inflar demasiado (rango 2x - 4x)
-    let dataUrl: string;
-    const baseW = (fabricCanvas.getWidth && fabricCanvas.getWidth()) || (fabricCanvas as any).width || 960;
-    let maxNatural = 0;
+    if (!fabricCanvas || isAddingToCart) return;
+    
+    setIsAddingToCart(true);
+    
     try {
-      const imgs = fabricCanvas.getObjects().filter(o => o.type === 'image') as any[];
-      for (const img of imgs) {
-        const el: HTMLImageElement | undefined = (img as any)._element;
-        if (!el) continue;
-        const nw = el.naturalWidth || el.width || 0;
-        if (nw > maxNatural) maxNatural = nw;
+      // Exportar thumbnail adaptativo: calcula multiplier según la imagen de mayor resolución
+      // Objetivo: conservar detalle sin inflar demasiado (rango 2x - 4x)
+      let dataUrl: string;
+      const baseW = (fabricCanvas.getWidth && fabricCanvas.getWidth()) || (fabricCanvas as any).width || 960;
+      let maxNatural = 0;
+      try {
+        const imgs = fabricCanvas.getObjects().filter(o => o.type === 'image') as any[];
+        for (const img of imgs) {
+          const el: HTMLImageElement | undefined = (img as any)._element;
+          if (!el) continue;
+          const nw = el.naturalWidth || el.width || 0;
+          if (nw > maxNatural) maxNatural = nw;
       }
     } catch {/* silencioso */}
     // Ratio entre la mayor imagen y el ancho del canvas visible
@@ -596,54 +585,98 @@ export default function PersonalizarPage() {
       }
     }
 
-    // Generar JSON y luego incrustar las imágenes como dataURL para evitar pérdida (blob: expirados)
-    const canvasJson: any = fabricCanvas.toJSON();
-    try {
-      const imageObjs = fabricCanvas.getObjects().filter(o => o.type === 'image') as any[];
-      const dataUrls: string[] = [];
-      for (const img of imageObjs) {
-        const el: HTMLImageElement | undefined = (img as any)._element;
-        if (!el) { dataUrls.push(''); continue; }
-        const src: string = el.src || '';
-        // Mantener logo por URL original para no duplicar peso
-        if (src === LOGO_URL) { dataUrls.push(src); continue; }
-        // Crear un canvas temporal del tamaño natural para preservar resolución original
-        const w = el.naturalWidth || el.width;
-        const h = el.naturalHeight || el.height;
-        if (!w || !h) { dataUrls.push(src); continue; }
-        const off = document.createElement('canvas');
-        off.width = w; off.height = h;
-        const ctx = off.getContext('2d');
-        if (!ctx) { dataUrls.push(src); continue; }
-        ctx.drawImage(el, 0, 0, w, h);
+    // Obtener todas las imágenes del canvas antes de serializar
+    const imageObjects = fabricCanvas.getObjects().filter(o => o.type === 'image') as any[];
+    
+    console.log('📦 Preparando para agregar al carrito, imágenes:', imageObjects.length);
+    
+    // CRÍTICO: Convertir blob: URLs a dataURL ANTES de toJSON()
+    // Solo necesitamos convertir las imágenes blob:, el logo ya es una URL válida
+    const conversionPromises = imageObjects
+      .filter((imgObj) => {
+        const src: string = (imgObj as any).getSrc ? (imgObj as any).getSrc() : (imgObj as any)._originalElement?.src || '';
+        return src.startsWith('blob:');
+      })
+      .map(async (imgObj) => {
+        const src: string = (imgObj as any).getSrc ? (imgObj as any).getSrc() : (imgObj as any)._originalElement?.src || '';
+        console.log('🖼️ Convirtiendo imagen blob src:', src.substring(0, 50));
+        
+        const el: HTMLImageElement | undefined = (imgObj as any)._element || (imgObj as any)._originalElement;
+        if (!el || !el.complete) {
+          console.warn('⚠️ Elemento de imagen no disponible o no cargado');
+          return;
+        }
+        
         try {
-          const embedded = off.toDataURL('image/png');
-          dataUrls.push(embedded);
-        } catch {
-          dataUrls.push(src);
+          // Crear canvas temporal con el tamaño natural de la imagen
+          const w = el.naturalWidth || el.width || 100;
+          const h = el.naturalHeight || el.height || 100;
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = w;
+          tempCanvas.height = h;
+          const ctx = tempCanvas.getContext('2d');
+          
+          if (!ctx) {
+            console.error('❌ No se pudo obtener contexto 2D');
+            return;
+          }
+          
+          ctx.drawImage(el, 0, 0, w, h);
+          const dataURL = tempCanvas.toDataURL('image/png');
+          
+          // Actualizar directamente las propiedades del objeto Fabric
+          // setSrc es asíncrono y puede causar problemas, mejor actualizar directamente
+          if ((imgObj as any)._element) {
+            (imgObj as any)._element.src = dataURL;
+          }
+          if ((imgObj as any)._originalElement) {
+            (imgObj as any)._originalElement.src = dataURL;
+          }
+          // Actualizar la propiedad interna src
+          if ((imgObj as any).src) {
+            (imgObj as any).src = dataURL;
+          }
+          
+          console.log('✅ Imagen convertida a dataURL correctamente');
+        } catch (err) {
+          console.error('❌ Error convirtiendo blob a dataURL:', err);
         }
-      }
-      // Reemplazar en el JSON (orden coincide con getObjects serializables)
-      let imgIndex = 0;
-      for (const obj of canvasJson.objects || []) {
-        if (obj.type === 'image') {
-          const newSrc = dataUrls[imgIndex];
-          if (newSrc) obj.src = newSrc; // incrustar
-          imgIndex++;
-        }
-      }
-    } catch {
-      // Silencioso: si falla, se mantiene JSON original (podría contener blob: urls y fallar luego en alta res)
+      });
+    
+    // Esperar a que TODAS las conversiones terminen
+    if (conversionPromises.length > 0) {
+      console.log('⏳ Esperando conversión de', conversionPromises.length, 'imágenes blob...');
+      await Promise.all(conversionPromises);
+      console.log('✅ Todas las imágenes convertidas');
+    } else {
+      console.log('✅ No hay imágenes blob para convertir');
     }
+    
+    // Forzar actualización del canvas después de las conversiones
+    fabricCanvas.renderAll();
+    
+    // Generar JSON del canvas (ahora debería tener dataURLs)
+    const canvasJson: any = fabricCanvas.toJSON();
+    
+    // Verificar qué tenemos en el JSON
+    if (Array.isArray(canvasJson?.objects)) {
+      for (const obj of canvasJson.objects) {
+        if (obj.type === 'image') {
+          console.log('📄 Objeto en JSON, src:', obj.src?.substring(0, 50));
+        }
+      }
+    }
+    
     // Guardar solo imágenes personalizadas (excluyendo el logo)
     const canvasImages = fabricCanvas.getObjects().filter(o => o.type === 'image') as any[];
-    // For each canvas image: if it originated from our IDB (we don't embed url), we keep its id; otherwise, fallback to url
-  const imagesArr = await Promise.all(canvasImages.map(async (img) => {
-      // Usar el id guardado en la instancia si existe; si no, fallback a URL (legacy)
+    
+    // Para cada imagen: guardar su ID de IndexedDB y propiedades de transformación
+    const imagesArr = await Promise.all(canvasImages.map(async (img) => {
       const instanceId: string | undefined = (img as any).__idbId;
       const src: string = img._element?.src || '';
       const isLogo = src === LOGO_URL;
       if (isLogo) return null;
+      
       const props = {
         left: img.left,
         top: img.top,
@@ -679,8 +712,8 @@ export default function PersonalizarPage() {
       font: tb.fontFamily,
       fill: typeof tb.fill === 'string' ? tb.fill : '#ffffff',
       fontSize: tb.fontSize,
-      left: tb.left,
-      top: tb.top,
+  left: tb.left,
+  top: tb.top,
       scaleX: tb.scaleX,
       scaleY: tb.scaleY,
       angle: tb.angle,
@@ -706,6 +739,12 @@ export default function PersonalizarPage() {
       canvasJson,
     });
     toast.success("Agregado al carrito");
+    } catch (error) {
+      console.error('❌ Error al agregar al carrito:', error);
+      toast.error("Error al agregar al carrito");
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   const { w, h } = parseSize(size);
@@ -1162,10 +1201,20 @@ export default function PersonalizarPage() {
   <Button
   className="btn-hero-static text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full mt-16 mb-4 flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-cyan-400"
     onClick={handleAddToCart}
+    disabled={isAddingToCart}
     aria-label="Agregar al Carrito"
   >
-    <span className="material-icons" style={{ fontSize: '1.2em' }}></span>
-    Agregar al Carrito
+    {isAddingToCart ? (
+      <>
+        <span className="material-icons animate-spin" style={{ fontSize: '1.2em' }}>refresh</span>
+        Procesando...
+      </>
+    ) : (
+      <>
+        <span className="material-icons" style={{ fontSize: '1.2em' }}></span>
+        Agregar al Carrito
+      </>
+    )}
   </Button>
 
         <div className="bg-background/80 rounded-lg p-3 text-xs text-muted-foreground border mt-2">

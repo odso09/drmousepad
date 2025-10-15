@@ -1,23 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { deleteImageBlob } from "@/lib/idb";
+import { deleteImageBlob, saveCanvasJson, getCanvasJson, deleteCanvasJson } from "@/lib/idb";
 import { toast } from "sonner";
-
-// Utilidad para limpiar claves si localStorage supera 4MB
-function clearLargeLocalStorageKeys(limitMB = 4) {
-  let total = 0;
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    const value = localStorage.getItem(key);
-    total += new Blob([key + value]).size;
-  }
-  if (total / (1024 * 1024) > limitMB) {
-    // Elimina claves grandes o no esenciales
-    localStorage.removeItem('personalizar_drmousepad');
-    localStorage.removeItem('dr-mousepad-cart');
-    // Aviso no bloqueante
-    toast.warning('Se limpió el almacenamiento local para evitar errores por espacio lleno.');
-  }
-}
 
 export type LogoState = {
   position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
@@ -32,10 +15,10 @@ export type PersonalizationData = {
     id: string;
     content: string;
     font: string;
+    left: any;
+    top: any;
     fill?: string;
     fontSize?: number;
-    left?: number;
-    top?: number;
     scaleX?: number;
     scaleY?: number;
     angle?: number;
@@ -79,20 +62,82 @@ const LS_KEY = "dr-mousepad-cart";
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Cargar items del localStorage e IndexedDB al iniciar
   useEffect(() => {
     const cached = localStorage.getItem(LS_KEY);
     if (cached) {
       try {
-        setItems(JSON.parse(cached));
-      } catch {}
+        const parsedItems: CartItem[] = JSON.parse(cached);
+        // Recuperar canvasJson de IndexedDB para cada item
+        Promise.all(
+          parsedItems.map(async (item) => {
+            const canvasJson = await getCanvasJson(item.id);
+            return { ...item, canvasJson: canvasJson ? JSON.parse(canvasJson) : undefined };
+          })
+        ).then(itemsWithCanvas => {
+          setItems(itemsWithCanvas);
+          setIsInitialized(true);
+        }).catch(() => {
+          setItems(parsedItems);
+          setIsInitialized(true);
+        });
+      } catch {
+        setIsInitialized(true);
+      }
+    } else {
+      setIsInitialized(true);
     }
   }, []);
 
+  // Guardar items cuando cambien (solo después de la inicialización)
   useEffect(() => {
-    localStorage.setItem(LS_KEY, JSON.stringify(items));
-    clearLargeLocalStorageKeys();
-  }, [items]);
+    if (!isInitialized) return; // No guardar durante la carga inicial
+
+    // Guardar en localStorage SOLO lo esencial (sin datos pesados)
+    const itemsToSave = items.map(item => {
+      const { canvasJson, ...itemWithoutCanvas } = item as any;
+      
+      // Limpiar data: quitar thumbnail y urls de imágenes base64
+      const cleanData = {
+        ...itemWithoutCanvas.data,
+        thumbnail: undefined, // Quitar thumbnail
+        images: (itemWithoutCanvas.data?.images || []).map((img: any) => ({
+          id: img.id, // Solo guardar el ID de IndexedDB
+          props: img.props // Mantener propiedades de transformación
+          // NO guardar url (puede ser base64 grande)
+        }))
+      };
+      
+      return {
+        ...itemWithoutCanvas,
+        data: cleanData
+      };
+    });
+    
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(itemsToSave));
+      
+      // Guardar canvasJson en IndexedDB
+      items.forEach(item => {
+        if (item.canvasJson) {
+          saveCanvasJson(item.id, JSON.stringify(item.canvasJson)).catch(err => {
+            console.warn('Error guardando canvasJson en IndexedDB:', err);
+          });
+        }
+      });
+    } catch (e) {
+      console.warn('Error guardando carrito en localStorage:', e);
+      // Si falla, intentar guardar sin las imágenes
+      try {
+        localStorage.setItem(LS_KEY, JSON.stringify(itemsToSave));
+      } catch (retryError) {
+        console.error('Error crítico guardando carrito:', retryError);
+        toast.error('Error al guardar el carrito. Por favor, intenta de nuevo.');
+      }
+    }
+  }, [items, isInitialized]);
 
   const addItem: CartContextValue["addItem"] = (item) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -120,6 +165,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
             }
           })();
         }
+        // Eliminar canvasJson de IndexedDB
+        deleteCanvasJson(id).catch(err => console.warn('Error eliminando canvasJson:', err));
       }
       return next;
     });
@@ -136,12 +183,24 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         .map((img: any) => img?.id)
         .filter(Boolean)
     )) as string[];
+    
+    // Capturar ids de items para eliminar canvasJson
+    const itemIds = items.map(i => i.id);
+    
     // Limpiar UI inmediatamente
     setItems([]);
+    
     // Borrar blobs de IndexedDB en segundo plano
     if (ids.length) {
       (async () => {
         await Promise.allSettled(ids.map(id => deleteImageBlob(id)));
+      })();
+    }
+    
+    // Borrar canvasJson de IndexedDB
+    if (itemIds.length) {
+      (async () => {
+        await Promise.allSettled(itemIds.map(id => deleteCanvasJson(id)));
       })();
     }
   };
