@@ -469,7 +469,7 @@ const Checkout = () => {
 			setPhase('Creando pedido');
 
 
-		// 2) Insertar productos primero y obtener productoIds
+		// 2) Insertar productos primero y obtener productoIds (incluyendo canvas_json desde el inicio)
 		const productosPayload = items.map((i) => ({
 			pedido_id: pedidoId,
 			tamano: (i.data as any)?.size ?? null,
@@ -480,6 +480,7 @@ const Checkout = () => {
 			precio_base: (i.data as any)?.basePrice ?? null,
 			total: (i.data as any)?.total ?? null,
 			cantidad: (i as any).quantity ?? 1,
+			canvas_json: (i as any)?.canvasJson ?? null, // Guardar canvas_json desde el inicio
 		}));
 		
 		setPhase('Registrando productos');
@@ -493,7 +494,13 @@ const Checkout = () => {
 		setProgress(prev => prev < 45 ? 45 : prev);
 			setPhase('Registrando productos');
 
-		// 3) Subir imagen final de cada producto en alta resolución
+		// 3) Subir imagen final de cada producto en alta resolución (EN PARALELO con contador)
+		setPhase('Procesando imágenes de alta resolución...');
+		const t4 = performance.now();
+		
+		let completedCount = 0;
+		const totalCount = items.length;
+		
 		const thumbUploadPromises = items.map(async (item, idx) => {
 			const itemStartTime = performance.now();
 			console.log(`⏱️ 🖼️ Iniciando renderizado item ${idx + 1}/${items.length}`);
@@ -513,7 +520,12 @@ const Checkout = () => {
 					// Generar imagen de alta resolución con las imágenes restauradas desde IndexedDB
 					const blob = await renderHighRes(canvasJson, tamano, imageIds);
 					const renderEnd = performance.now();
-					console.log(`⏱️ 🎨 Render completado item ${idx + 1}: ${(renderEnd - renderStart).toFixed(0)}ms (${(blob.size / 1024 / 1024).toFixed(2)}MB)`);
+					const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
+					console.log(`⏱️ 🎨 Render completado item ${idx + 1}: ${(renderEnd - renderStart).toFixed(0)}ms (${sizeMB}MB)`);
+					
+					// Actualizar contador al terminar render
+					completedCount++;
+					setPhase(`Procesando imagen ${completedCount} de ${totalCount} (${sizeMB}MB)... 🎨`);
 					
 					const uploadStart = performance.now();
 					const prodId = productoIds[idx];
@@ -531,20 +543,39 @@ const Checkout = () => {
 				}
 			}
 			
-			// Actualizar producto con la url y canvas_json (solo en pedido_productos)
+			// Actualizar producto solo con la url_imagen_final (canvas_json ya está desde el INSERT)
 			const prodId = productoIds[idx];
-			await supabase.from('pedido_productos').update({ url_imagen_final: url, canvas_json: canvasJson }).eq('id', prodId);
+			try {
+				const { error: updateErr } = await supabase
+					.from('pedido_productos')
+					.update({ url_imagen_final: url })
+					.eq('id', prodId);
+				
+				if (updateErr) {
+					console.error(`Error actualizando URL de producto ${prodId}:`, updateErr);
+				}
+			} catch (err) {
+				console.error(`Error en update de producto ${prodId}:`, err);
+			}
 			
 			const itemEndTime = performance.now();
 			console.log(`⏱️ ✅ Item ${idx + 1} completado: ${(itemEndTime - itemStartTime).toFixed(0)}ms TOTAL`);
+			
+			// Actualizar progreso (rango 45-70)
+			const progressPercent = 45 + Math.round((completedCount / totalCount) * 25);
+			setProgress(progressPercent);
+			
 			return url;
 		});
 
-		setPhase('Generando imágenes de alta resolución');
-		const t4 = performance.now();
 		await Promise.all(thumbUploadPromises);
 		const t5 = performance.now();
-		console.log(`⏱️ TODAS las imágenes de alta res generadas y subidas: ${(t5 - t4).toFixed(0)}ms`);			// 4) Subir imágenes y recolectar filas en paralelo (con límite de concurrencia)
+		console.log(`⏱️ TODAS las imágenes de alta res generadas y subidas: ${(t5 - t4).toFixed(0)}ms`);
+		
+		setProgress(70);
+		setPhase('Guardando imágenes adicionales...');
+		
+		// 4) Subir imágenes y recolectar filas en paralelo (con límite de concurrencia)
 
 			const allImageTasks: Array<() => Promise<any | null>> = [];
 			items.forEach((it, idx) => {
@@ -597,10 +628,12 @@ const Checkout = () => {
 
 			let completedImages = 0;
 			const totalImages = allImageTasks.length || 1;
-			setPhase('Subiendo imágenes');
+			setPhase('Guardando imágenes de usuario...');
 			const imageRowsRaw = await runLimited(allImageTasks.map(t => async () => {
 				const r = await t();
 				completedImages++;
+				// Actualizar mensaje con progreso
+				setPhase(`Guardando imágenes ${completedImages}/${totalImages}... 📷`);
 				// Reservar rango 45-75 para imágenes
 				setProgress(45 + Math.min(30, Math.round((completedImages / totalImages) * 30)));
 				return r;
@@ -643,13 +676,15 @@ const Checkout = () => {
 					   });
 				   });
 			});
+			
+			setPhase('Guardando textos personalizados... ✏️');
 			if (allTextRows.length) await supabase.from('producto_textos').insert(allTextRows);
 			
 			const t8 = performance.now();
 			console.log(`⏱️ Textos guardados: ${(t8 - t7).toFixed(0)}ms (${allTextRows.length} textos)`);
 
 			setProgress(prev => prev < 90 ? 90 : prev);
-			setPhase('Actualizando pedido');
+			setPhase('Finalizando pedido... ✓');
 
 			// Ya no se espera actualización de pedido, ya se actualizó arriba
 			setProgress(100);
@@ -694,6 +729,14 @@ const Checkout = () => {
 							<span>{progress < 100 ? `${progress}%` : 'Completado'}</span>
 							<span>{progress < 100 ? phase : 'Listo'}</span>
 						</div>
+						{progress < 100 && (
+							<div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+								<p className="text-xs text-yellow-300 text-center font-medium flex items-center justify-center gap-2">
+									<span className="text-base">⚠️</span>
+									<span>No cierres esta ventana mientras se procesa tu pedido</span>
+								</p>
+							</div>
+						)}
 					</div>
 				</div>
 			)}
