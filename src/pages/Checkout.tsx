@@ -454,7 +454,9 @@ const Checkout = () => {
 			setPhase('Creando pedido');
 
 
-		// 2) Insertar productos primero y obtener productoIds (incluyendo canvas_json desde el inicio)
+		// 2) Insertar productos primero y obtener productoIds
+		// NOTA: NO incluimos canvas_json aquí porque puede ser muy grande (varios MB con dataURLs)
+		// y causaría error 500. El canvas_json se puede recuperar desde IndexedDB si es necesario.
 		const productosPayload = items.map((i) => ({
 			pedido_id: pedidoId,
 			tamano: (i.data as any)?.size ?? null,
@@ -465,7 +467,6 @@ const Checkout = () => {
 			precio_base: (i.data as any)?.basePrice ?? null,
 			total: (i.data as any)?.total ?? null,
 			cantidad: (i as any).quantity ?? 1,
-			canvas_json: (i as any)?.canvasJson ?? null, // Guardar canvas_json desde el inicio
 		}));
 		
 		setPhase('Registrando productos');
