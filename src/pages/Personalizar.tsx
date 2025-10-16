@@ -867,7 +867,7 @@ export default function PersonalizarPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">Personaliza</h3>
-                  <p className="text-muted-foreground">Agrega textos, cambia colores y ajusta el logo</p>
+                  <p className="text-muted-foreground">Agrega textos, cambia el color de fondo y ajusta el logo</p>
                 </div>
               </div>
               
@@ -877,7 +877,7 @@ export default function PersonalizarPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">Agrega al carrito</h3>
-                  <p className="text-muted-foreground">¡Listo! Revisa el resumen y procede con tu compra</p>
+                  <p className="text-muted-foreground">¡Listo! Agrega al carrito, realiza tu pago y recibe tu mousepad personalizado en la puerta de tu casa mañana mismo (Delivery gratis)</p>
                 </div>
               </div>
             </div>
