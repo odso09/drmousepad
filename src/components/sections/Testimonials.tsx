@@ -199,7 +199,7 @@ export const Testimonials = () => {
                     />
 
                     <div className="col-start-2 row-start-1">
-                      <h4 className="font-semibold text-sm">{testimonial.name}</h4>
+                      <p className="font-semibold text-sm">{testimonial.name}</p>
                       <p className="text-xs text-muted-foreground">{testimonial.city}</p>
                     </div>
 
@@ -232,7 +232,7 @@ export const Testimonials = () => {
                     />
 
                     <div className="col-start-2 row-start-1">
-                      <h4 className="font-semibold text-sm">{testimonial.name}</h4>
+                      <p className="font-semibold text-sm">{testimonial.name}</p>
                       <p className="text-xs text-muted-foreground">{testimonial.city}</p>
                     </div>
 

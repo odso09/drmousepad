@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import heroImage from "@/assets/hero-mousepad.jpg";
+import heroImage from "@/assets/hero-mousepad.webp";
 
 export const Hero = () => {
   return (
