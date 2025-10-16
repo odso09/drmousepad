@@ -10,11 +10,12 @@ import { useSearchParams } from "react-router-dom";
 import { Canvas as FabricCanvas, Image as FabricImage, Rect, Textbox, Object as FabricObject, Line as FabricLine } from "fabric";
 const logoUrl = new URL("../assets/logo.png", import.meta.url).href;
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { ColorPicker } from "@/components/ui/color-picker";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import { deleteImageBlob, getImageBlob, saveImageBlob } from "@/lib/idb";
@@ -64,8 +65,25 @@ export default function PersonalizarPage() {
   const [backgroundColor, setBackgroundColor] = useState("#0b0f14");
   // Evita re-restaurar (p. ej., tras agregar al carrito que dispara cambios en items)
   const restoredOnceRef = useRef(false);
+  
+  // Estado para modal de bienvenida
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   const { addItem, items } = useCart();
+  
+  // Mostrar modal de bienvenida solo la primera vez
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem('hasSeenPersonalizarWelcome');
+    if (!hasSeenWelcome && !editId) {
+      // Pequeño delay para que la página cargue primero
+      setTimeout(() => setShowWelcomeModal(true), 500);
+    }
+  }, [editId]);
+  
+  const closeWelcomeModal = () => {
+    setShowWelcomeModal(false);
+    localStorage.setItem('hasSeenPersonalizarWelcome', 'true');
+  };
 
   useEffect(() => {
     const data = {
@@ -806,6 +824,82 @@ export default function PersonalizarPage() {
         description="Crea tu mousepad único: elige tamaño, color, agrega tu logo y textos. Vista previa en tiempo real y envío gratis en Paraguay."
         canonical="https://drmousepad.com/personalizar"
       />
+      
+      {/* Modal de Bienvenida */}
+      <Dialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <Sparkles className="w-6 h-6 text-accent" />
+              ¡Bienvenido al Diseñador de Mousepads!
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <p className="text-lg text-muted-foreground">
+              Crear tu mousepad personalizado es muy fácil. Sigue estos pasos:
+            </p>
+            
+            <div className="space-y-4">
+              <div className="flex gap-4 items-start p-4 rounded-lg bg-card border">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
+                  1
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg mb-1">Elige el tamaño</h3>
+                  <p className="text-muted-foreground">Selecciona el tamaño perfecto para tu escritorio</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4 items-start p-4 rounded-lg bg-card border">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
+                  2
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg mb-1">Sube tu imagen</h3>
+                  <p className="text-muted-foreground">Arrastra o selecciona la imagen que quieres usar de fondo</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4 items-start p-4 rounded-lg bg-card border">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
+                  3
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg mb-1">Personaliza</h3>
+                  <p className="text-muted-foreground">Agrega textos, cambia colores y ajusta el logo</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4 items-start p-4 rounded-lg bg-card border">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
+                  4
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg mb-1">Agrega al carrito</h3>
+                  <p className="text-muted-foreground">¡Listo! Revisa el resumen y procede con tu compra</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+              <p className="text-sm text-center">
+                <span className="text-accent font-semibold">💡 Tip:</span> Puedes mover, rotar y redimensionar cualquier elemento haciendo clic sobre él
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex justify-center pt-4">
+            <Button 
+              onClick={closeWelcomeModal}
+              className="btn-hero-static text-lg px-8 py-6"
+            >
+              ¡Entendido, Comenzar!
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
       <section className="container py-8 grid gap-8 lg:grid-cols-[1fr_360px]">
       <div>
         {/* Título y subtítulo */}
