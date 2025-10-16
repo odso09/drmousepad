@@ -44,7 +44,7 @@ export const Footer = () => {
 
           {/* Legal Links */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-cyber">Legal</h4>
+            <h3 className="font-semibold text-cyber">Legal</h3>
             <div className="space-y-2">
               <button
                 onClick={() => openModalHandler('terms')}
@@ -69,7 +69,7 @@ export const Footer = () => {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-cyber">Contacto</h4>
+            <h3 className="font-semibold text-cyber">Contacto</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" aria-hidden="true" />
@@ -88,7 +88,7 @@ export const Footer = () => {
 
           {/* Contact Button (WhatsApp) */}
           <div className="space-y-2">
-            <h4 className="font-semibold text-cyber">Soporte</h4>
+            <h3 className="font-semibold text-cyber">Soporte</h3>
             <a
               href="https://wa.me/595981269504"
               target="_blank"
@@ -300,7 +300,7 @@ export const Footer = () => {
               }
             ].map((faq, index) => (
               <div key={index} className="border-l-2 border-primary/20 pl-4">
-                <h4 className="font-semibold text-neon-purple mb-2">{faq.q}</h4>
+                <h3 className="font-semibold text-neon-purple mb-2">{faq.q}</h3>
                 <p className="text-muted-foreground">{faq.a}</p>
               </div>
             ))}
