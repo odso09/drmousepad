@@ -242,7 +242,7 @@ export default function PersonalizarPage() {
     fc.preserveObjectStacking = true;
     setFabricCanvas(fc);
 
-    // Cargar el logo y posicionarlo en la esquina seleccionada
+    // Cargar el logo y posicionarlo en la esquina seleccionada    // Cargar el logo y posicionarlo en la esquina seleccionada
     (FabricImage.fromURL(logoUrl) as Promise<FabricImage>)
       .then((img) => {
         if (!img) {
@@ -542,29 +542,29 @@ export default function PersonalizarPage() {
         return;
       }
       
-      // Obtener la imagen de mayor resolución
-      let maxNatural = 0;
+      // Obtener la imagen de MENOR resolución (peor caso)
+      let minNatural = Infinity;
       for (const img of userImages) {
         const el: HTMLImageElement | undefined = img._element;
         if (!el) continue;
         const nw = el.naturalWidth || el.width || 0;
-        if (nw > maxNatural) maxNatural = nw;
+        if (nw > 0 && nw < minNatural) minNatural = nw;
       }
       
-      if (!maxNatural) {
+      if (minNatural === Infinity || minNatural === 0) {
         setQualityDPI(null);
         return;
       }
       
       // Calcular multiplier (misma lógica que handleAddToCart)
       const baseW = (fabricCanvas.getWidth && fabricCanvas.getWidth()) || 960;
-      let ratio = maxNatural && baseW ? maxNatural / baseW : 0;
+      let ratio = minNatural && baseW ? minNatural / baseW : 0;
       if (!ratio || ratio < 2) ratio = 2;
       let multiplier = Math.min(ratio, 4);
       multiplier = Math.round(multiplier * 10) / 10;
       
       // Tamaño final de la imagen con multiplier
-      const finalWidth = maxNatural * multiplier;
+      const finalWidth = minNatural * multiplier;
       
       // Tamaño del mousepad en pulgadas
       const { w } = parseSize(size);
