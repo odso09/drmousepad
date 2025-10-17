@@ -10,7 +10,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Canvas as FabricCanvas, Image as FabricImage, Rect, Textbox, Object as FabricObject, Line as FabricLine } from "fabric";
 const logoUrl = new URL("../assets/logo.png", import.meta.url).href;
 import { Button } from "@/components/ui/button";
-import { X, Sparkles, Info } from "lucide-react";
+import { X, Sparkles, Info, AlertCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -69,6 +69,12 @@ export default function PersonalizarPage() {
   
   // Estado para modal de bienvenida
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  
+  // Estado para modal de ayuda de calidad de imagen
+  const [showImageQualityHelp, setShowImageQualityHelp] = useState(false);
+  
+  // Estado para DPI calculado
+  const [qualityDPI, setQualityDPI] = useState<number | null>(null);
 
   const { addItem, items } = useCart();
   
@@ -517,6 +523,72 @@ export default function PersonalizarPage() {
     positionLogo(fabricCanvas, logoObj, logoPos);
   }, [logoPos]);
 
+  // Calcular DPI en tiempo real (post-multiplicador)
+  useEffect(() => {
+    if (!fabricCanvas) {
+      setQualityDPI(null);
+      return;
+    }
+    
+    const calculateDPI = () => {
+      const images = fabricCanvas.getObjects().filter(o => o.type === 'image') as any[];
+      const userImages = images.filter(img => {
+        const src = img._element?.src || '';
+        return src !== logoUrl; // Excluir el logo
+      });
+      
+      if (userImages.length === 0) {
+        setQualityDPI(null);
+        return;
+      }
+      
+      // Obtener la imagen de mayor resolución
+      let maxNatural = 0;
+      for (const img of userImages) {
+        const el: HTMLImageElement | undefined = img._element;
+        if (!el) continue;
+        const nw = el.naturalWidth || el.width || 0;
+        if (nw > maxNatural) maxNatural = nw;
+      }
+      
+      if (!maxNatural) {
+        setQualityDPI(null);
+        return;
+      }
+      
+      // Calcular multiplier (misma lógica que handleAddToCart)
+      const baseW = (fabricCanvas.getWidth && fabricCanvas.getWidth()) || 960;
+      let ratio = maxNatural && baseW ? maxNatural / baseW : 0;
+      if (!ratio || ratio < 2) ratio = 2;
+      let multiplier = Math.min(ratio, 4);
+      multiplier = Math.round(multiplier * 10) / 10;
+      
+      // Tamaño final de la imagen con multiplier
+      const finalWidth = maxNatural * multiplier;
+      
+      // Tamaño del mousepad en pulgadas
+      const { w } = parseSize(size);
+      const mousepadInches = w / 2.54; // cm a pulgadas
+      
+      // DPI real de impresión
+      const dpi = Math.round(finalWidth / mousepadInches);
+      
+      setQualityDPI(dpi);
+    };
+    
+    // Calcular inicial
+    calculateDPI();
+    
+    // Escuchar cambios en el canvas
+    fabricCanvas.on('object:added' as any, calculateDPI);
+    fabricCanvas.on('object:removed' as any, calculateDPI);
+    
+    return () => {
+      fabricCanvas.off('object:added' as any, calculateDPI);
+      fabricCanvas.off('object:removed' as any, calculateDPI);
+    };
+  }, [fabricCanvas, size, uploadedImages, logoUrl]);
+
   const textCount = texts.length;
   const total = PRICING.BASE_PRICE + (logoRemoved ? PRICING.EXTRA_LOGO : 0) + (rgb ? PRICING.EXTRA_RGB : 0);
   
@@ -778,10 +850,15 @@ export default function PersonalizarPage() {
     const handleSelection = () => {
       const active = fabricCanvas.getActiveObject();
       setSelectedObj(active && (active.type === 'image' || active.type === 'textbox') ? active : null);
+      scheduleUpdate(); // Calcular overlay inmediatamente al seleccionar
+    };
+    const handleDeselection = () => {
+      setSelectedObj(null);
+      setObjectOverlays([]); // Limpiar overlays inmediatamente
     };
     fabricCanvas.on('selection:created' as any, handleSelection);
     fabricCanvas.on('selection:updated' as any, handleSelection);
-    fabricCanvas.on('selection:cleared' as any, () => setSelectedObj(null));
+    fabricCanvas.on('selection:cleared' as any, handleDeselection);
 
     scheduleUpdate();
     handleSelection();
@@ -789,7 +866,7 @@ export default function PersonalizarPage() {
   events.forEach(evt => fabricCanvas.off(evt as any, scheduleUpdate));
       fabricCanvas.off('selection:created' as any, handleSelection);
       fabricCanvas.off('selection:updated' as any, handleSelection);
-      fabricCanvas.off('selection:cleared' as any, () => setSelectedObj(null));
+      fabricCanvas.off('selection:cleared' as any, handleDeselection);
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, [fabricCanvas, logoObj]);
@@ -878,7 +955,7 @@ export default function PersonalizarPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">Elige extras</h3>
-                  <p className="text-muted-foreground">Decide si quieres quitar el logo de Dr Mousepad (por un costo extra) y si quieres agregar luces RGB sincronizables a los bordes de tu mousepadpara un efecto único</p>
+                  <p className="text-muted-foreground">Decide si quieres quitar el logo de Dr Mousepad y si quieres agregar luces RGB a los bordes de tu mousepad para un efecto único</p>
                 </div>
               </div>
               
@@ -906,6 +983,93 @@ export default function PersonalizarPage() {
               className="btn-hero-static text-lg px-8 py-6"
             >
               ¡Entendido, Comenzar!
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal de Ayuda - Calidad de Imagen */}
+      <Dialog open={showImageQualityHelp} onOpenChange={setShowImageQualityHelp}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <AlertCircle className="w-6 h-6 text-accent" />
+              Calidad de Imagen para Impresión
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+              <h3 className="font-bold text-lg mb-2">📐 ¿Qué es el DPI?</h3>
+              <p className="text-muted-foreground">
+                El DPI (puntos por pulgada) es una medida que indica cuántos puntos de tinta se imprimen en cada pulgada.
+Cuanto mayor sea el DPI de tu imagen, más nítido y definido se verá el diseño impreso en tu mousepad.
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <h3 className="font-bold text-lg">🎨 Guía de Calidad:</h3>
+              
+              <div className="flex gap-3 items-start p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                <span className="text-2xl">🟢</span>
+                <div>
+                  <p className="font-bold text-green-400">Excelente (≥ 150 DPI)</p>
+                  <p className="text-sm text-muted-foreground">Tu mousepad se verá nítido y profesional</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 items-start p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                <span className="text-2xl">🟡</span>
+                <div>
+                  <p className="font-bold text-yellow-400">Aceptable (100-149 DPI)</p>
+                  <p className="text-sm text-muted-foreground">Calidad decente, pero recomendamos imágenes de mayor resolución</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 items-start p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                <span className="text-2xl">🔴</span>
+                <div>
+                  <p className="font-bold text-red-400">Baja (&lt; 100 DPI)</p>
+                  <p className="text-sm text-muted-foreground">La imagen puede verse pixelada al imprimir</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-card border rounded-lg p-4">
+              <h3 className="font-bold text-lg mb-2">💡 Consejos para obtener la mejor calidad de impresión:</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex gap-2">
+                  <span className="text-accent">•</span>
+                  <span>Usa imágenes de alta resolución (mínimo 1980 a 3000 píxeles)</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-accent">•</span>
+                  <span>Evita imágenes descargadas de internet en tamaño pequeño, siempre trata de descargar la imagen en su version mas grande</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-accent">•</span>
+                  <span>Si usas fotos propias, usa la calidad original sin comprimir</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-accent">•</span>
+                  <span>Cuanto más grande el mousepad, mayor resolución necesitas</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+              <p className="text-sm">
+                <span className="font-semibold text-primary">📊 Nuestro sistema</span> calcula automáticamente la calidad de tu imagen y te lo mostramos en tiempo real en el resumen del pedido.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex justify-center pt-4">
+            <Button 
+              onClick={() => setShowImageQualityHelp(false)}
+              className="btn-hero-static text-lg px-8 py-6"
+            >
+              ¡Entendido!
             </Button>
           </div>
         </DialogContent>
@@ -961,22 +1125,32 @@ export default function PersonalizarPage() {
             </Select>
           </div>
           <div className="rounded-xl bg-card border p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '2.2rem',
-                height: '2.2rem',
-                borderRadius: '50%',
-                fontWeight: 'bold',
-                fontSize: '1.2rem',
-                marginRight: '0.5rem',
-                color: '#fff',
-                  background: 'linear-gradient(90deg, #0891b2 0%, #6d28d9 100%)',
-                boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
-              }}>2</span>
-              <span className="font-bold">Subir Imagen</span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '2.2rem',
+                  height: '2.2rem',
+                  borderRadius: '50%',
+                  fontWeight: 'bold',
+                  fontSize: '1.2rem',
+                  marginRight: '0.5rem',
+                  color: '#fff',
+                    background: 'linear-gradient(90deg, #0891b2 0%, #6d28d9 100%)',
+                  boxShadow: '0 0 8px 0 rgba(0,0,0,0.12)'
+                }}>2</span>
+                <span className="font-bold">Subir Imagen</span>
+              </div>
+              <button
+                onClick={() => setShowImageQualityHelp(true)}
+                className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 group font-bold text-2xl"
+                aria-label="Ayuda sobre calidad de imagen"
+                title="Ayuda sobre calidad de imagen"
+              >
+                !
+              </button>
             </div>
             {/* Label oculto para el input de archivo */}
             <label htmlFor="upload-image" className="sr-only">Subir imagen</label>
@@ -1013,7 +1187,7 @@ export default function PersonalizarPage() {
             <button
               type="button"
               aria-label="Elegir color desde la pantalla"
-              title="Copiar algun color de la pantalla"
+              title="Copiar algun color de la pantalla para el fondo del mousepad"
               onClick={async () => {
                 if (window.EyeDropper) {
                   try {
@@ -1244,6 +1418,21 @@ export default function PersonalizarPage() {
             <span>Tamaño:</span>
             <span className="font-bold text-base">{size}</span>
           </li>
+          
+          {qualityDPI !== null && (
+            <li className="flex justify-between items-center">
+              <span>Calidad impresión:</span>
+              <span className="font-bold flex items-center gap-1">
+                {qualityDPI >= 150 ? (
+                  <><span className="text-2xl">🟢</span> <span className="text-green-400">Excelente ({qualityDPI} DPI)</span></>
+                ) : qualityDPI >= 100 ? (
+                  <><span className="text-2xl">🟡</span> <span className="text-yellow-400">Aceptable ({qualityDPI} DPI)</span></>
+                ) : (
+                  <><span className="text-2xl">🔴</span> <span className="text-red-400">Baja ({qualityDPI} DPI)</span></>
+                )}
+              </span>
+            </li>
+          )}
           <li className="flex justify-between items-center">
             <span>Logo Dr Mousepad:</span>
             <span className="font-bold flex items-center gap-1">
