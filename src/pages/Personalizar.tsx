@@ -10,7 +10,7 @@ import { useSearchParams } from "react-router-dom";
 import { Canvas as FabricCanvas, Image as FabricImage, Rect, Textbox, Object as FabricObject, Line as FabricLine } from "fabric";
 const logoUrl = new URL("../assets/logo.png", import.meta.url).href;
 import { Button } from "@/components/ui/button";
-import { X, Sparkles } from "lucide-react";
+import { X, Sparkles, Info } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -857,7 +857,7 @@ export default function PersonalizarPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">Sube tu imagen</h3>
-                  <p className="text-muted-foreground">Arrastra o selecciona la imagen que quieres usar de fondo</p>
+                  <p className="text-muted-foreground">Selecciona la imagen que quieres usar de fondo</p>
                 </div>
               </div>
               
@@ -867,7 +867,7 @@ export default function PersonalizarPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">Personaliza</h3>
-                  <p className="text-muted-foreground">Agrega textos, cambia el color de fondo y ajusta el logo</p>
+                  <p className="text-muted-foreground">Agrega textos, cambia el color de fondo y ajusta tu imagen como mas te guste</p>
                 </div>
               </div>
               
@@ -876,8 +876,18 @@ export default function PersonalizarPage() {
                   4
                 </div>
                 <div>
+                  <h3 className="font-bold text-lg mb-1">Elige extras</h3>
+                  <p className="text-muted-foreground">Decide si quieres quitar el logo de Dr Mousepad (por un costo extra) y si quieres agregar luces RGB sincronizables a los bordes de tu mousepadpara un efecto único</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-4 items-start p-4 rounded-lg bg-card border">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
+                  5
+                </div>
+                <div>
                   <h3 className="font-bold text-lg mb-1">Agrega al carrito</h3>
-                  <p className="text-muted-foreground">¡Listo! Agrega al carrito, realiza tu pago y recibe tu mousepad personalizado en la puerta de tu casa mañana mismo (Delivery gratis)</p>
+                  <p className="text-muted-foreground">¡Listo! Agrega al carrito, realiza tu pago y recibe tu mousepad personalizado en la puerta de tu casa en 1 o 2 dias (Delivery gratis)</p>
                 </div>
               </div>
             </div>
@@ -903,9 +913,19 @@ export default function PersonalizarPage() {
       <section className="container py-8 grid gap-8 lg:grid-cols-[1fr_360px]">
       <div>
         {/* Título y subtítulo */}
-        <div className="mb-8">
+        <div className="mb-8 relative">
           <h1 className="text-3xl md:text-4xl font-extrabold text-cyber mb-2">Personaliza Tu Mousepad</h1>
           <p className="text-muted-foreground text-lg">Diseña tu Mousepad perfecto con nuestro editor avanzado</p>
+          
+          {/* Botón de ayuda flotante */}
+          <button
+            onClick={() => setShowWelcomeModal(true)}
+            className="absolute top-0 right-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 group font-bold text-2xl"
+            aria-label="Abrir instrucciones"
+            title="Instrucciones"
+          >
+            ?
+          </button>
         </div>
 
         {/* Paso 1 y 2: Tamaño e Imagen */}
