@@ -6,7 +6,7 @@ declare global {
   }
 }
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Canvas as FabricCanvas, Image as FabricImage, Rect, Textbox, Object as FabricObject, Line as FabricLine } from "fabric";
 const logoUrl = new URL("../assets/logo.png", import.meta.url).href;
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ export default function PersonalizarPage() {
   // Clave para localStorage
   const LOCAL_KEY = 'personalizar_drmousepad';
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const editId = searchParams.get("id");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
@@ -1287,6 +1288,17 @@ export default function PersonalizarPage() {
       </>
     )}
   </Button>
+
+  {items.length > 0 && (
+    <Button
+      onClick={() => navigate('/carrito')}
+      variant="outline"
+      className="w-full text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 flex items-center justify-center gap-2 border-primary/50 hover:bg-primary/10 hover:border-primary transition-colors text-white hover:text-white"
+      aria-label="Continuar al carrito"
+    >
+      Continuar
+    </Button>
+  )}
 
         <div className="bg-background/80 rounded-lg p-3 text-xs text-muted-foreground border mt-2">
           <ul className="space-y-1">
