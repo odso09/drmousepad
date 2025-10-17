@@ -1229,9 +1229,9 @@ export default function PersonalizarPage() {
             </div>
             <div className="flex items-center gap-2 mb-2 mt-10">
               <Switch checked={rgb} onCheckedChange={setRgb} id="rgb" />
-              <label htmlFor="rgb" className="text-sm">Activar RGB (+50,000 Gs)</label>
+              <label htmlFor="rgb" className="text-sm">Activar Luces RGB (+50,000 Gs)</label>
             </div>
-            <p className="text-xs text-muted-foreground">Añade efectos de luces LED sincronizables</p>
+            <p className="text-xs text-muted-foreground">Añade efectos de luces LED sincronizables en los bordes del mousepad</p>
           </div>
         </div>
       </div>
@@ -1291,7 +1291,7 @@ export default function PersonalizarPage() {
         <div className="bg-background/80 rounded-lg p-3 text-xs text-muted-foreground border mt-2">
           <ul className="space-y-1">
             <li><span className="text-cyan-400 mr-1">&#10003;</span> Envío gratis a todo Paraguay</li>
-            <li><span className="text-cyan-400 mr-1">&#10003;</span> Producción 3-5 días hábiles</li>
+            <li><span className="text-cyan-400 mr-1">&#10003;</span> Producción 1-2 días hábiles</li>
             <li><span className="text-cyan-400 mr-1">&#10003;</span> Garantía de 1 año</li>
           </ul>
         </div>
